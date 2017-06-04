@@ -1,2 +1,12 @@
 # Created by .ignore support plugin (hsz.mobi)
 /*/target/
+.idea/compiler.xml
+.idea/copyright/
+.idea/encodings.xml
+.idea/ihnd.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/thriftCompiler.xml
+.idea/workspace.xml
+alarmExport/.svn/
+common/.svn/
