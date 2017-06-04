@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="alarmExport:war">
+    <output-path>$PROJECT_DIR$/alarmExport/target</output-path>
+    <root id="archive" name="alarmExport.war">
+      <element id="artifact" artifact-name="alarmExport:war exploded" />
+    </root>
+  </artifact>
+</component>

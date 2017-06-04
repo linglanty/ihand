@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.2.xsd
+       http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit-1.2.xsd">
+
+    <import resource="spring/rootContext.xml"/>
+  <!--  <bean id="deviceVerbose" class="cn.com.inhand.common.service.Verbose">
+        <constructor-arg value="#{config.project.verboseDevice}"/>
+    </bean>
+    <bean id="modelVerbose" class="cn.com.inhand.common.service.Verbose">
+        <constructor-arg value="#{config.project.verboseModel}"/>
+    </bean>
+    <bean id="siteVerbose" class="cn.com.inhand.common.service.Verbose">
+        <constructor-arg value="#{config.project.verboseSite}"/>
+    </bean>
+    <bean id="machineVerbose" class="cn.com.inhand.common.service.Verbose">
+        <constructor-arg value="#{config.project.verboseMachine}"/>
+    </bean>
+    <bean id="policyVerbose" class="cn.com.inhand.common.service.Verbose">
+        <constructor-arg value="#{config.project.verbosePolicy}"/>
+    </bean>
+    <task:annotation-driven executor="taskExecutor"/>
+    <task:executor id="taskExecutor" pool-size="10" queue-capacity="10000"/> -->
+   
+    <bean class="cn.com.inhand.common.oauth2.TokenClient" lazy-init="true">
+        <constructor-arg ref="config"></constructor-arg>
+    </bean>
+    
+      <!-- RABBITMQ CONFIG -->
+    <!-- <rabbit:queue auto-delete="true" durable="false" id="lbsQueue" name="#{config.project.lbsQueueName}"/>
+    
+    <rabbit:topic-exchange name="dn.exchange.lbs">
+        <rabbit:bindings>
+            <rabbit:binding pattern="dn.key.lbs.*" queue="#{config.project.lbsQueueName}"/>
+        </rabbit:bindings>
+    </rabbit:topic-exchange>
+    
+    <rabbit:listener-container concurrency="2" connection-factory="rabbitConnectionFactory" 
+    					acknowledge="auto" message-converter="mqMessageConverter">
+    	<rabbit:listener ref="locationMessageHandler" queues="lbsQueue"/>
+    </rabbit:listener-container>
+    
+    <rabbit:admin id="amqpAdmin" connection-factory="rabbitConnectionFactory"/> -->
+</beans>

@@ -1,0 +1,1 @@
+var lang = {		zh_CN:{							alarm_level : "级别"			    ,alarm_origin : "告警来源"			    ,varible_limit_alarmdesc:"告警描述"			    ,time:"时间"			    , site_name:"现场名称"				,state:"状态"        }};
