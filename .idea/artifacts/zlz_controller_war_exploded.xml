@@ -4,7 +4,7 @@
     <root id="root">
       <element id="directory" name="WEB-INF">
         <element id="directory" name="classes">
-          <element id="module-output" name="zlz_controller" />
+          <element id="module-output" name="fault_alert" />
         </element>
         <element id="directory" name="lib">
           <element id="library" level="project" name="Maven: org.hibernate:hibernate-validator:5.0.1.Final" />
@@ -51,9 +51,9 @@
         </element>
       </element>
       <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/zlz_controller/target/zlz_controller/META-INF/MANIFEST.MF" />
+        <element id="file-copy" path="$PROJECT_DIR$/fault_alert/target/zlz_controller/META-INF/MANIFEST.MF" />
       </element>
-      <element id="javaee-facet-resources" facet="zlz_controller/web/Web" />
+      <element id="javaee-facet-resources" facet="fault_alert/web/Web" />
     </root>
   </artifact>
 </component>
