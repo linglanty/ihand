@@ -6,13 +6,20 @@
 
 package cn.com.dj.controller;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.validation.Valid;
-
+import cn.com.dj.dao.FaultDao;
+import cn.com.dj.dto.Fault;
+import cn.com.dj.dto.FaultCreateBean;
+import cn.com.dj.dto.FaultQueryBean;
+import cn.com.dj.log.LogCode;
+import cn.com.inhand.common.dto.BasicResultDTO;
+import cn.com.inhand.common.dto.OnlyResultDTO;
+import cn.com.inhand.common.exception.ErrorCode;
+import cn.com.inhand.common.exception.ErrorCodeException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,37 +30,31 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import cn.com.dj.dao.FaultDao;
-import cn.com.dj.dto.Fault;
-import cn.com.dj.dto.FaultCreateBean;
-import cn.com.dj.dto.FaultQueryBean;
-import cn.com.dj.log.BusinessLogger;
-import cn.com.dj.log.LogCode;
-import cn.com.inhand.common.dto.BasicResultDTO;
-import cn.com.inhand.common.dto.OnlyResultDTO;
-import cn.com.inhand.common.exception.ErrorCode;
-import cn.com.inhand.common.exception.ErrorCodeException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import javax.annotation.Resource;
+import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
+ *  链接：http://pan.baidu.com/s/1mizERqg 密码：6241 项目文档地址
  * @author Jiang Du
  */
 @Controller
 @RequestMapping({"api/fault"})
 public class FaultController {
-    
-	@Autowired
+    private static Logger logger = LoggerFactory.getLogger(RuleController.class);
+
+    @Autowired
 	ObjectMapper mapper;
-	
-	@Autowired
-	BusinessLogger businessLogger;
-	
-	@Autowired
+
+    @Resource(name = "faultService")
 	FaultDao faultService;
-    
-	
+
+    /**
+	 * Request URL:http://120.209.233.188:8989/faultHandle/api/fault/list
+	 * ?handled=--0--&level&oid=54BCA345DA08A0075C000001&start_time=0&end_time=1500729407914&limit=20&verbose=100&access_token=8a06ccb5f84d8b67c99249723596632e
+	 */
 	
 	/**
 	 * 获取所有的故障信息 包括已处理的 按时间顺序来 
@@ -71,7 +72,7 @@ public class FaultController {
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
     @ResponseBody 
     public Object getAllFaultsInfo(@RequestParam("access_token") String accessToken,
-    		@RequestParam(required=false, defaultValue="--1,2--") String level,
+    		@RequestParam(required=false, defaultValue="1,2") String level,
     		@RequestParam("handled") String handled,@RequestParam("start_time") long start_time,@RequestParam("end_time") long end_time,
             @RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,@RequestParam(required=false, defaultValue="10") int limit,
             @RequestParam(required=false) String site_name,
@@ -98,10 +99,10 @@ public class FaultController {
 		}
         queryBean.setLevels(levelList);
         
-        
-        if(site_name!=null&&site_name!="")
-        	site_name = new String(site_name.getBytes("ISO8859_1"),"utf-8");        
-		
+        //编码问题
+        if(StringUtils.isNotEmpty(site_name)) {
+            site_name = new String(site_name.getBytes("ISO8859_1"),"utf-8");
+        }
 		queryBean.setSiteName(site_name);
 		List<Fault> list = this.faultService.getFualtsBypage(oId,queryBean, cursor, limit);
         return new BasicResultDTO((long)list.size(), cursor, limit, list);
@@ -128,7 +129,7 @@ public class FaultController {
     		@RequestHeader(value="X-API-UID", required=false) ObjectId xUId, @RequestHeader(value="X-API-ROLE-TYPE", required=false) Integer roleType) {
 		 Fault fault = (Fault)this.mapper.convertValue(faultCreateBean, Fault.class);
     	this.faultService.createFault(fault, oId);
-    	this.businessLogger.info(oId, LogCode.CREATE_FAULT_OK, xUId, xUsername, xIp, new String[] { fault.getId().toString() });
+    	this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, faultId:{} ", oId, LogCode.CREATE_FAULT_OK, xUId, xUsername, xIp, new String[] { fault.getId().toString() });
     	return new OnlyResultDTO(fault);
     }
 	
@@ -144,7 +145,7 @@ public class FaultController {
 			throw new ErrorCodeException(ErrorCode.RESOURCE_DOES_NOT_EXIST, new Object[] { id });
 		}
 		this.faultService.modifyFaultStatus(fault, oId);
-		this.businessLogger.info(oId, LogCode.UPDATE_RULE_OK, xUId, xUsername, xIp, new String[] { id.toString() });
+		logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, faultId:{} ", oId, LogCode.UPDATE_RULE_OK, xUId, xUsername, xIp, id.toString());
     	return new OnlyResultDTO(fault);
     }
 	

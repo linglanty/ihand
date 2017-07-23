@@ -6,13 +6,18 @@
 
 package cn.com.dj.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.validation.Valid;
-
+import cn.com.dj.dao.PumpDao;
+import cn.com.dj.dto.Pump;
+import cn.com.dj.dto.PumpCreateBean;
+import cn.com.dj.log.LogCode;
+import cn.com.inhand.common.dto.BasicResultDTO;
+import cn.com.inhand.common.dto.OnlyResultDTO;
+import cn.com.inhand.common.exception.ErrorCode;
+import cn.com.inhand.common.exception.ErrorCodeException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,17 +28,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import cn.com.dj.dao.PumpDao;
-import cn.com.dj.dto.Pump;
-import cn.com.dj.dto.PumpCreateBean;
-import cn.com.dj.log.BusinessLogger;
-import cn.com.dj.log.LogCode;
-import cn.com.inhand.common.dto.BasicResultDTO;
-import cn.com.inhand.common.dto.OnlyResultDTO;
-import cn.com.inhand.common.exception.ErrorCode;
-import cn.com.inhand.common.exception.ErrorCodeException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -42,15 +40,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Controller
 @RequestMapping({ "api/pump" })
 public class PumpController {
+	private static Logger logger = LoggerFactory.getLogger(RuleController.class);
 
 	@Autowired
 	PumpDao pumpService;
 
 	@Autowired
 	ObjectMapper mapper;
-
-	@Autowired
-	BusinessLogger businessLogger;
 
 	// list all of the pumps of a model
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
@@ -98,8 +94,8 @@ public class PumpController {
 		}
 		Pump pump = (Pump) this.mapper.convertValue(pumpCb, Pump.class);
 		this.pumpService.createPump(pump, oId);
-		this.businessLogger.info(oId, LogCode.CREATE_PUMP_OK, xUId, xUsername,
-				xIp, new String[] { pump.getId().toString() });
+		logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.CREATE_PUMP_OK, xUId, xUsername,
+				xIp, pump.getId().toString());
 		return new OnlyResultDTO(pump);
 	}
 
@@ -128,8 +124,8 @@ public class PumpController {
 					new Object[] { pump.getPumpName() });
 		}
 		this.pumpService.modifyPump(pump, oId);
-		this.businessLogger.info(oId, LogCode.UPDATE_PUMP_OK, xUId, xUsername,
-				xIp, new String[] { pump.getId().toString() });
+		this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.UPDATE_PUMP_OK, xUId, xUsername,
+				xIp, pump.getId().toString());
 		return new OnlyResultDTO(pump);
 	}
 
@@ -150,8 +146,8 @@ public class PumpController {
 					new Object[] { id });
 		}
 		this.pumpService.deletePump(id, oId);
-		this.businessLogger.info(oId, LogCode.DELETE_PUMP_OK, xUId, xUsername,
-				xIp, new String[] { pump.getId().toString() });
+		this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, pumpId:{} ", oId, LogCode.DELETE_PUMP_OK, xUId, xUsername,
+				xIp, pump.getId().toString());
 		OnlyResultDTO result = new OnlyResultDTO();
 		Map<String, ObjectId> resultMap = new HashMap<String, ObjectId>();
 		resultMap.put("id", id);

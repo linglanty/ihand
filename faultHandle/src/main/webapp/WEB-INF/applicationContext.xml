@@ -4,6 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
 
     <import resource="spring/rootContext.xml"/>
+    <import resource="spring/spring-dataSource.xml"/>
     <bean class="cn.com.inhand.common.oauth2.TokenClient" lazy-init="true">
         <constructor-arg ref="config"></constructor-arg>
     </bean>

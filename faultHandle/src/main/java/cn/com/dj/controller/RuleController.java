@@ -6,13 +6,18 @@
 
 package cn.com.dj.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.validation.Valid;
-
+import cn.com.dj.dao.RuleDao;
+import cn.com.dj.dto.Rule;
+import cn.com.dj.dto.RuleCreateBean;
+import cn.com.dj.log.LogCode;
+import cn.com.inhand.common.dto.BasicResultDTO;
+import cn.com.inhand.common.dto.OnlyResultDTO;
+import cn.com.inhand.common.exception.ErrorCode;
+import cn.com.inhand.common.exception.ErrorCodeException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,17 +28,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import cn.com.dj.dao.RuleDao;
-import cn.com.dj.dto.Rule;
-import cn.com.dj.dto.RuleCreateBean;
-import cn.com.dj.log.BusinessLogger;
-import cn.com.dj.log.LogCode;
-import cn.com.inhand.common.dto.BasicResultDTO;
-import cn.com.inhand.common.dto.OnlyResultDTO;
-import cn.com.inhand.common.exception.ErrorCode;
-import cn.com.inhand.common.exception.ErrorCodeException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -42,16 +40,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Controller
 @RequestMapping({"api/rule"})
 public class RuleController {
-    
+
+	private static Logger logger = LoggerFactory.getLogger(RuleController.class);
+
 	@Autowired
     private RuleDao ruleService;
 	
 	@Autowired
 	ObjectMapper mapper;
-	
-	@Autowired
-	BusinessLogger businessLogger;
-    
+
 	//list all of the rule of a model
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     @ResponseBody 
@@ -88,7 +85,7 @@ public class RuleController {
 	    	}
     	  	Rule rule = (Rule)this.mapper.convertValue(ruleCb, Rule.class);
 	      	this.ruleService.createRule(rule, oId);
-	      	this.businessLogger.info(oId, LogCode.CREATE_RULE_OK, xUId, xUsername, xIp, new String[] { rule.getId().toString() });
+	      	this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.CREATE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString() );
 	      	return new OnlyResultDTO(rule);
       }
     
@@ -108,7 +105,7 @@ public class RuleController {
     		throw new ErrorCodeException(ErrorCode.RESOURCE_NAME_ALREADY_EXISTS, new Object[] { rule.getFaultDescription() });
 		}	
     	this.ruleService.modifyRule(rule, oId);
-    	this.businessLogger.info(oId, LogCode.UPDATE_RULE_OK, xUId, xUsername, xIp, new String[] { rule.getId().toString() });
+    	logger.info("id:{}, code:{}, uId:{}, ruleId:{} ",oId, LogCode.UPDATE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString());
     	return new OnlyResultDTO(rule);
     }
     
@@ -124,7 +121,7 @@ public class RuleController {
     		throw new ErrorCodeException(ErrorCode.RESOURCE_DOES_NOT_EXIST, new Object[] { id });
     	}
     	this.ruleService.deleteRule(id, oId);
-    	this.businessLogger.info(oId, LogCode.DELETE_RULE_OK, xUId, xUsername, xIp, new String[] { rule.getId().toString() });
+    	this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ruleId:{} ", oId, LogCode.DELETE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString());
     	OnlyResultDTO result = new OnlyResultDTO();
     	Map<String,ObjectId> resultMap = new HashMap<String,ObjectId>();
     	resultMap.put("id", id);

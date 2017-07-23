@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import cn.com.dj.dto.ModelQueryBean;
 
-@Component
+@Component("queryGenrator")
 public class QueryGenrator {
 
 	public void withSortDESC(Query query, String field) {

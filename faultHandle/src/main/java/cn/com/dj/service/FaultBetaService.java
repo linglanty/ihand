@@ -30,15 +30,15 @@ import java.util.regex.Pattern;
  * 
  * @author Jiang Du
  */
-@Service("faultService")
-public class FaultService extends MongoService implements FaultDao {
+@Service("faultBetaService")
+public class FaultBetaService extends MongoService implements FaultDao {
 	private String collectionName = "faultInfo";
 
 	@Autowired
 	private QueryGenrator queryGenrator;
 
 	private static final Logger logger = LoggerFactory
-			.getLogger(FaultService.class);
+			.getLogger(FaultBetaService.class);
 
 	@Override
 	public List<Fault> getAllFaultsList(ObjectId oid) {
