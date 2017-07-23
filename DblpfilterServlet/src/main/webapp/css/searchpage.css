@@ -1,0 +1,61 @@
+.hero-top {
+		padding-left: 10px;
+		padding-top:  0px;
+		margin-bottom: 2px;
+		margin-top:0px;
+		font-size: 18px;
+		font-weight: 2;
+		line-height: 30px;
+		background-color: #f5f5f5;
+		width:100%;
+		position: relative;
+		clear: both;
+		z-index: 900;
+		height: 72px;
+		border-bottom:1px solid #DEDEDE;
+		min-width:1024px;
+		}
+		
+		.hero-top2 {
+		padding-left: 10px;
+		padding-top:  1px;
+		margin-bottom: 1px;
+		margin-top:1px;
+		font-size: 18px;
+		font-weight: 2;
+		line-height: 30px;
+		width:100%;
+		position: relative;
+		clear: both;
+		z-index: 900;
+		height: 50px;
+		border-bottom:1px solid #DEDEDE;
+		}
+      	.hero_lab{
+      		font-size:25px;
+      		margin-left:40px;
+      		color:#DD4B39;
+      		padding-top:12px;
+      	
+      	}
+      	.hero_labr{
+      		position: absolute;
+			color: #999;
+			top: 17px;
+			margin-left: 229px;
+      	}
+      	.hero_labr2{
+      		position: absolute;
+			color: #999;
+			top: 5px;
+			margin-left: 700px;
+      	}
+      	.div_info{
+      		margin-top:20px;
+      		margin-left:30px;
+      	
+      	}
+      	.titback{
+      		padding-top:12px;
+      		background:#e8eaeb;
+      	}

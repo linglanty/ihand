@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Template &middot; Bootstrap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 20px;
+        padding-bottom: 40px;
+      }
+
+      /* Custom container */
+      .container-narrow {
+        margin: 0 auto;
+        max-width: 700px;
+      }
+      .container-narrow > hr {
+        margin: 30px 0;
+      }
+
+      /* Main marketing message and sign up button */
+      .jumbotron {
+        margin: 60px 0;
+        text-align: center;
+      }
+      .jumbotron h1 {
+        font-size: 72px;
+        line-height: 1;
+      }
+      .jumbotron .btn {
+        font-size: 21px;
+        padding: 14px 24px;
+      }
+
+      /* Supporting marketing content */
+      .marketing {
+        margin: 60px 0;
+      }
+      .marketing p + h4 {
+        margin-top: 28px;
+      }
+    </style>
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+  <script type="text/javascript">
+	
+	function addnewPer(){
+		createXmlHttpRequest();///<!--  Abbr,Dblpabbr,Fullname,Area,grade,Itype,Publisher-->
+		var a_abbr=document.getElementById("a_abbr");
+		var a_dblpabbr=document.getElementById("a_dblpabbr");
+		var a_fullname=document.getElementById("a_fullname");
+		var a_grade=document.getElementById("a_grade");
+		var a_field=document.getElementById("a_field");
+		var a_type=document.getElementById("a_type");
+		var a_publisher=document.getElementById("a_publisher");
+		url="servlet/Modify?action=addnew&abbr="+a_abbr.value+"&dblpabbr="+a_dblpabbr.value+"&fullname="+a_fullname.value+"&grade="+a_grade.value+"&field="+a_field.value+"&type="+a_type.value+"&publisher="+a_publisher.value;
+		xmlHttp.open("GET",url,true);
+		xmlHttp.onreadystatechange=AddsResult;
+		xmlHttp.send(null);
+	};
+	
+	function AddsResult(){
+		if(xmlHttp.readyState==4){
+			if(xmlHttp.status==200){
+				 var xmlDoc=xmlHttp.responseText;     
+				 if(xmlDoc=="YES"){
+				 	alert("----SUCCESS!!----");
+				 	document.getElementById("addclose").click();
+				 }
+				 else if(xmlDoc=="NO")
+				 {
+				 	alert("----FAILURE!!Please try again!!----");
+				 }
+				 else if(xmlDoc=="~~~~")
+				 {
+				 	alert("Before your operation,you should sign in!!");
+				 	window.location.href="Manager.jsp";
+				 	return;
+				 }
+		     } 
+		     else{     
+		         alert("AJAX服务器返回错误！");
+		     }  
+		}
+	};
+   		
+  </script>
+ 
+ </head>
+
+  <body>
+    <div class="container-narrow">
+      <div class="masthead">
+        <h3 class="muted">DBLP FILTER</h3>
+      </div>
+      <div class="jumbotron">
+        <h2>Change the sort of Journals and Conference!</h2>
+      </div>
+      <hr>
+      <div class="row-fluid marketing">
+      <div class="dropdown">
+  	 	<span class="lead">Select the Academic field:
+  	 	       <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">Academic  Field<b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+					 <li onclick="selectfield(3);"><a id="ts_3" href="#" >Software engineering, system software and programming languages</a></li>
+                     <li onclick="selectfield(7);"><a id="ts_7" href="#" >Human-computer interaction & ubiquitous computing</a></li>
+                     <li onclick="selectfield(1);"><a id="ts_1"  href="#" >Computer systems & high-performance computing</a></li>
+                     <li onclick="selectfield(6);"><a id="ts_6" href="#" >Artificial Intelligence & Pattern Recognition</a></li>
+                     <li onclick="selectfield(4);"><a id="ts_4" href="#" >Databases, data mining and content retrieval</a></li>
+                     <li onclick="selectfield(8);"><a id="ts_8" href="#" >Frontier crossing & comprehensive</a></li>
+                     <li onclick="selectfield(2);"><a id="ts_2" href="#" >Network & Information Security</a></li>
+                     <li onclick="selectfield(5);"><a id="ts_5" href="#" >Computer Graphics & Multimedia</a></li>
+                     <li onclick="selectfield(9);"><a id="ts_9" href="#" >Theoretical Computer Science</a></li>
+                     <li onclick="selectfield(10);"><a id="ts_10" href="#" >Computer networks</a></li>
+                  </ul>
+                   </span>
+                   <button id="addnew"  class="btn"><a href="#addperc" data-toggle="modal"><i class="icon-plus"></i>NEW</a></button></div>
+                  </div>
+                 
+  				<div>
+  				<!--  Id, Abbr, Dblpabbr, Fullname, Area, grade, Itype, Publisher-->
+  				<div><h4 align="center" id="field"></h4></div>
+  				<table class="table table-bordered">
+  				<thead><tr><th width="30px">Abbr</th> <th width="296px">Dblp Abbr</th> <th width="396px">Fullname</th> <th>Grade</th> <th>Edit</th></tr></thead>
+  				<tbody id="content">
+  				
+  				</tbody>
+  				</table>
+  				</div>
+     		 <hr>
+
+      <div class="footer" align="center">
+        <p>&copy; Company 2013</p>
+      </div>
+
+    </div> <!-- /container -->
+    
+	<div id="updateperc" class="modal hide fade"  tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    	
+		  	<div class="modal-header">
+		    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		    <h3 id="myModalLabel">Modify the Journals and Conference</h3>
+		 	 </div>
+	 	
+	 		 <div class="modal-body">
+	       <table class="table table-bordered" width="100%">
+	       <tr>
+	       		<td style="width:30%;font-size:18px" ><label>Abbr:</label></td><!--  Id, Abbr, Dblpabbr, Fullname, Area, grade, Itype, Publisher-->
+	     		<td style="width:70%">
+	     			<input type="text" name="abbr" id="abbr" class="input-xlarge">
+	     			<!-- <input type="hidden" id="email1" value="${email}">-->
+	     			 <input type="hidden" id="pearid"> 
+	     		</td>
+	     		</tr>
+	     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Dblpabbr:</label></td>
+	     		<td style="width:70%" class="form-inline">
+	     			<input type="text" id="dblpabbr" class="input-xlarge">&nbsp;&nbsp;<font color="red" id="warning1" style="display:none">The old password is error!!</font>
+	     		</td>
+     		</tr>
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Fullname:</label></td>
+	     		<td style="width:70%" class="form-inline">
+	     			<input type="text" id="fullname" name="fullname" class="input-xlarge">&nbsp;&nbsp;<font color="red" style="display:none">*</font>
+	     		</td>
+     		</tr>
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Grade:</label></td>
+	     		<td style="width:70%" class="form-inline">
+					<select class="span2" id="grade">
+					  <option value="3">A</option>
+					  <option value="2">B</option>
+					  <option value="1">C</option>
+					</select>
+	     		</td>
+	     		
+     		</tr>
+     </table>
+    	</div>
+	  <div class="modal-footer">
+	    <button class="btn" data-dismiss="modal" id="closeDiv" aria-hidden="true">Close</button>
+	    <button type="submit" class="btn btn-primary" id="submitbtn" onclick="modifyperconf();">Submit</button>
+	  </div>
+	
+	</div>
+	
+	<div id="addperc" class="modal hide fade" style="width:600px" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    	
+		  	<div class="modal-header">
+		    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		    <h3 id="myModalLabel">Modify the Journals and Conference</h3>
+		 	 </div>
+	 	
+	 		 <div class="modal-body">
+	       <table class="table table-bordered" width="100%">
+	       <tr>
+	       		<td style="width:30%;font-size:18px" ><label>Abbr:</label></td><!--  Id, Abbr, Dblpabbr, Fullname, Area, grade, Itype, Publisher-->
+	     		<td style="width:70%">
+	     			<input type="text" name="abbr" id="a_abbr" class="input-xlarge">
+	     			<!-- <input type="hidden" id="email1" value="${email}">-->
+	     			 <input type="hidden" id="pearid"> 
+	     		</td>
+	     		</tr>
+	     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Dblpabbr:</label></td>
+	     		<td style="width:70%" class="form-inline">
+	     			<input type="text" id="a_dblpabbr" class="input-xlarge">&nbsp;&nbsp;<font color="red" id="warning1" style="display:none">The old password is error!!</font>
+	     		</td>
+     		</tr>
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Fullname:</label></td>
+	     		<td style="width:70%" class="form-inline">
+	     			<input type="text" id="a_fullname" name="fullname" class="input-xlarge">&nbsp;&nbsp;<font color="red" style="display:none">*</font>
+	     		</td>
+     		</tr>
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Publisher:</label></td>
+	     		<td style="width:70%" class="form-inline">
+					<input type="text" id="a_publisher" name="publisher" class="input-xlarge">&nbsp;&nbsp;<font color="red" style="display:none">*</font>
+	     		</td>
+     		</tr>
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Field:</label></td>
+	     		<td style="width:70%" class="form-inline">
+					<select class="span5" id="a_field">
+					  <option value="3">Software engineering, system software and programming languages</option>
+					  <option value="7">Human-computer interaction & ubiquitous computing</option>
+					  <option value="1">Computer systems & high-performance computing</option>
+					  <option value="6">Artificial Intelligence & Pattern Recognition</option>
+					  <option value="4">Databases, data mining and content retrieval</option>
+					  <option value="8">Frontier crossing & comprehensive</option>
+					  <option value="2">Network & Information Security</option>
+					  <option value="5">Computer Graphics & Multimedia</option>
+					  <option value="9">Theoretical Computer Science</option>
+					  <option value="10">Computer networks</option>
+					  </select>
+	     		</td>
+     		</tr>
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Grade:</label></td>
+	     		<td style="width:70%" class="form-inline">
+					<select class="span2" id="a_grade">
+					  <option value="3">A</option>
+					  <option value="2">B</option>
+					  <option value="1">C</option>
+					</select>
+	     		</td>
+	     		
+     		</tr>
+     		<!--  Abbr,Dblpabbr,Fullname,Area,grade,Itype,Publisher-->
+     		<tr>
+	     		<td style="width:30%;font-size:18px"> <label>Type:</label></td>
+	     		<td style="width:70%" class="form-inline">
+					<select class="span2" id="a_type">
+					  <option value="1">Journal</option>
+					  <option value="2">Conference</option>
+					 </select>
+	     		</td>
+     		</tr>
+     </table>
+    	</div>
+	  <div class="modal-footer">
+	    <button class="btn" data-dismiss="modal" id="addclose" aria-hidden="true">Close</button>
+	    <button type="submit" class="btn btn-primary" onclick="addnewPer();">Submit</button>
+	  </div>
+	
+	</div>
+	
+   
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap-transition.js"></script>
+    <script src="js/bootstrap-alert.js"></script>
+    <script src="js/bootstrap-modal.js"></script>
+    <script src="js/bootstrap-dropdown.js"></script>
+    <script src="js/bootstrap-scrollspy.js"></script>
+    <script src="js/bootstrap-tab.js"></script>
+    <script src="js/bootstrap-tooltip.js"></script>
+    <script src="js/bootstrap-popover.js"></script>
+    <script src="js/bootstrap-button.js"></script>
+    <script src="js/bootstrap-collapse.js"></script>
+    <script src="js/bootstrap-carousel.js"></script>
+    <script src="js/bootstrap-typeahead.js"></script>
+	<script src="js/ShowPerconf.js"></script>
+ 	<script src="js/ModifyShow.js"></script>
+    <script src="js/ModifySuccess.js"></script>
+    <script src="js/DeletePerconf.js"></script>
+    </body>
+</html>
