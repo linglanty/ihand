@@ -8,14 +8,13 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static cn.com.dj.util.MachineUtils.getCpuUsageRate;
+import static cn.com.dj.util.MachineUtils.getIpAddress;
 
 /**
  * 每台机器自动化地上报自己的数据到数据库
@@ -47,16 +46,5 @@ public class AutoHeartBeatService implements InitializingBean{
 
             }
         }, 0, 5, TimeUnit.SECONDS);
-    }
-
-    //获取Ip地址
-    private String getIpAddress() throws UnknownHostException {
-        InetAddress addr = InetAddress.getLocalHost();
-        return addr.getHostAddress();
-    }
-
-    private double getCpuUsageRate(){
-        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-        return osBean.getSystemLoadAverage();
     }
 }

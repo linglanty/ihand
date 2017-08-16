@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="war" name="zlz_controller:war">
-    <output-path>$PROJECT_DIR$/zlz_controller/target</output-path>
+    <output-path>$PROJECT_DIR$/faultAlert/target</output-path>
     <root id="archive" name="zlz_controller.war">
       <element id="artifact" artifact-name="zlz_controller:war exploded" />
     </root>

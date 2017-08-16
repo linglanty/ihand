@@ -98,7 +98,6 @@ public class DetectService {
             return;
         }
 		try {
-
             ObjectId oid=new ObjectId(oId);
             Map<ObjectId, ObjectId> machineId2ModelId= Maps.newHashMap();//machineId to modelId
             Map<ObjectId, Machine> machineId2Machine= Maps.newHashMap();//machineId to machine
@@ -136,7 +135,7 @@ public class DetectService {
             //规则匹配  对匹配成功的故障进行插入数据库
             for(Map.Entry<ObjectId, Map<String, RealTimeVariable>> machineId2realTimeDataEntry:machineId2realTimeDataMap.entrySet())//对于每个设备的数据
             {
-                Map<String,RealTimeVariable> realtimeVariables=machineId2realTimeDataEntry.getValue();
+                Map<String,RealTimeVariable> realtimeVariables = machineId2realTimeDataEntry.getValue();
 
                 List<Rule> rulesByModelId=modelId2Rule.get(machineId2ModelId.get(machineId2realTimeDataEntry.getKey()));//对于每个设备的Rule
 
