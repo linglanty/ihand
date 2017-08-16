@@ -6,8 +6,13 @@
 
 package cn.com.dj.service;
 
-import java.util.List;
-
+import cn.com.dj.dao.FaultDumpDao;
+import cn.com.dj.dto.Fault;
+import cn.com.dj.dto.FaultDump;
+import cn.com.dj.util.QueryGenrator;
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.common.util.UpdateUtils;
+import cn.com.inhand.dn4.utils.DateUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +24,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import cn.com.dj.dao.FaultDumpDao;
-import cn.com.dj.dto.Fault;
-import cn.com.dj.dto.FaultDump;
-import cn.com.dj.util.QueryGenrator;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.common.util.UpdateUtils;
-import cn.com.inhand.dn4.utils.DateUtils;
+import java.util.List;
 
 /**
  * 
@@ -71,7 +70,6 @@ public class FaultDumpService extends MongoService implements FaultDumpDao {
 
 	@Override
 	public void updateFaultDump(FaultDump faultdump, ObjectId oid) {
-		
 		Assert.notNull(faultdump.getId());
 		MongoTemplate mt = this.factory.getMongoTemplateByOId(oid);
 		faultdump.setCreateTime(Long.valueOf(DateUtils.getUTC()));

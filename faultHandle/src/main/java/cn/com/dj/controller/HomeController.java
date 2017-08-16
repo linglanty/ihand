@@ -43,11 +43,14 @@ public class HomeController {
     }
 
     /**
+     * 执行定时任务
+     */
+    /**
      * api/task/execTasks
      * @param task
      * @return
      */
-    @RequestMapping(value={"execTasks"}, method={org.springframework.web.bind.annotation.RequestMethod.POST})
+    @RequestMapping(value={"execTasks"}, method={RequestMethod.POST})
     @ResponseBody
     public Boolean execTasks(Task task) {
         if (task == null) {

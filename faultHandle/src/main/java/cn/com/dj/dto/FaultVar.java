@@ -8,6 +8,10 @@ package cn.com.dj.dto;
  */
 public class FaultVar {
 
+	private String _id;
+	private String name;
+	private Limit limit;
+
 	public String get_id() {
 		return _id;
 	}
@@ -26,8 +30,5 @@ public class FaultVar {
 	public void setLimit(Limit limit) {
 		this.limit = limit;
 	}
-	private String _id;
-	private String name;
-	private Limit limit;
-	
+
 }

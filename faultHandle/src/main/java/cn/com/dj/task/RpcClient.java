@@ -15,8 +15,9 @@ public class RpcClient {
 
     private static final RestTemplate template = new RestTemplate();
 
-    public boolean checkMachine(String url) {
+    public boolean checkMachine(String ip) {
         try{
+            String url = ip +":8080/api/task/listcheck";
             Boolean object = template.getForObject(url, Boolean.class);
             if (object == true) {
                 return true;
@@ -27,8 +28,9 @@ public class RpcClient {
         return true;
     }
 
-    public boolean sendTasks(String url,List<ObjectId> objectIds) {
+    public boolean sendTasks(String ip, List<ObjectId> objectIds) {
         try {
+            String url = ip +":8080/api/task/execTasks";
             Task task =new Task(objectIds);
             Boolean acceptTask = template.postForObject(url, task, Boolean.class);
             if (true == acceptTask) {

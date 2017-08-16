@@ -86,7 +86,7 @@ public class RuleService extends MongoService implements RuleDao{
 	}
 
 	@Override
-	public List<Rule> getRuleListByRuleIds(List<ObjectId> modelIds, ObjectId oId) {
+	public List<Rule> getRulesByRuleIds(List<ObjectId> modelIds, ObjectId oId) {
 		// TODO Auto-generated method stub
 		MongoTemplate template = this.factory.getMongoTemplateByOId(oId);
 		return template.find(Query.query(Criteria.where("modelId").in(modelIds)), Rule.class, this.collectionName);

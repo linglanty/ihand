@@ -1,10 +1,9 @@
 package cn.com.dj.dao;
 
-import java.util.List;
-
+import cn.com.dj.dto.Rule;
 import org.bson.types.ObjectId;
 
-import cn.com.dj.dto.Rule;
+import java.util.List;
 
 public interface RuleDao {
 
@@ -18,11 +17,11 @@ public interface RuleDao {
 	
 	/**
 	 * get the rule list of a Model
-	 * @param modelId
+	 * @param modelIds
 	 * @param oid
 	 * @return
 	 */
-	public List<Rule> getRuleListByRuleIds(List<ObjectId> modelIds,ObjectId oid) ;
+	public List<Rule> getRulesByRuleIds(List<ObjectId> modelIds,ObjectId oid) ;
 	
 	
 	/**
@@ -60,5 +59,5 @@ public interface RuleDao {
 	 * @param oid
 	 */
 	public void modifyRule(Rule rule,ObjectId oid);
-	
+
 }

@@ -1,13 +1,13 @@
 package cn.com.dj.util;
 
-import java.util.List;
-import java.util.Map;
-
 import cn.com.dj.dto.FaultParameter;
 import cn.com.dj.dto.FaultReason;
 import cn.com.dj.dto.FaultVar;
 import cn.com.dj.dto.Limit;
 import cn.com.dj.dto.RealTimeVariable;
+
+import java.util.List;
+import java.util.Map;
 
 public class LogicJudg {
 	
@@ -28,7 +28,7 @@ public class LogicJudg {
 	//and all the parameters satisfied
 	public static boolean isFault( List<FaultParameter> parameters,Map<String,RealTimeVariable> realtimeVariables)
 	{
-		for(FaultParameter parameter:parameters)
+		for(FaultParameter parameter : parameters)
 		{
 			//对于每个参数都满足的时候可以确定是这种错误
 			if (!hasProblemByGroup(parameter,realtimeVariables)) {

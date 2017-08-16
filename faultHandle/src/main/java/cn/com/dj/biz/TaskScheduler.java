@@ -130,8 +130,7 @@ public class TaskScheduler {
         if (CollectionUtils.isEmpty(objectIds)) {
             return;
         }
-        String url = machine.getIp() +":8080/" + "api/task/execTasks";
-        rpcClient.sendTasks(url, objectIds);
+        rpcClient.sendTasks(machine.getIp(), objectIds);
     }
 
     private double computeCpuUsage(HeartBeatInfo machine) {
@@ -145,8 +144,7 @@ public class TaskScheduler {
         }
         List<HeartBeatInfo> heartBeatInfos = Lists.newArrayListWithCapacity(validMachines.size());
         for (HeartBeatInfo machine : heartBeatInfos) {
-            String url = machine.getIp() +":8080/" + "api/task/listcheck";
-            boolean isWork = rpcClient.checkMachine(url);
+            boolean isWork = rpcClient.checkMachine(machine.getIp());
             if (isWork) {
                 heartBeatInfos.add(machine);
             }

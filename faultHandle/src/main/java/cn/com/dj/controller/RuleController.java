@@ -36,6 +36,7 @@ import java.util.Map;
 /**
  *
  * @author Jiang Du
+ *  配置故障规则信息
  */
 @Controller
 @RequestMapping({"api/rule"})
@@ -49,21 +50,36 @@ public class RuleController {
 	@Autowired
 	ObjectMapper mapper;
 
-	//list all of the rule of a model
+    /**
+     * 展示一个型号的所有故障规则信息
+     * @param accessToken
+     * @param modelId
+     * @param oId
+     * @return
+     */
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     @ResponseBody 
-    public Object getAllRuleOverviewInfo(@RequestParam("access_token") String accessToken,
+    public Object getAllRuleOverviewInfo(
+            @RequestParam("access_token") String accessToken,
     		@RequestParam(value="modelId", required=true) ObjectId modelId,
     		@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId) { 
     	System.out.println("RULE List API call");
         List<Rule> list = ruleService.getRuleListByModelId(modelId, oId);
         return new BasicResultDTO((long)list.size(), 0, list.size(), list);
     }
-    
-    //get the rule info by the rule id
+
+    /**
+     * 根据泵的主键来获取泵的详细信息
+     * @param id
+     * @param accessToken
+     * @param oId
+     * @return
+     */
     @RequestMapping(value={"/{id}"}, method={org.springframework.web.bind.annotation.RequestMethod.GET})
     @ResponseBody
-    public Object getFaultRuleById(@PathVariable ObjectId id, @RequestParam("access_token") String accessToken,
+    public Object getFaultRuleById(
+            @PathVariable ObjectId id,
+            @RequestParam("access_token") String accessToken,
     		@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId)
     {
     	Rule rule = this.ruleService.getRuleById(id, oId);
@@ -71,30 +87,63 @@ public class RuleController {
     	result.setResult(rule);
     	return result;
     }
-    
+
+    /**
+     * 添加一个故障规则信息
+     * @param accessToken
+     * @param verbose
+     * @param xOId
+     * @param xUsername
+     * @param xIp
+     * @param xUId
+     * @param roleType
+     * @param oId
+     * @param ruleCb
+     * @return
+     */
    @RequestMapping(value={""}, method={org.springframework.web.bind.annotation.RequestMethod.POST})
    @ResponseBody
-   public Object add(@RequestParam("access_token") String accessToken,
-    		@RequestParam(required=false, defaultValue="0") int verbose, @RequestHeader(value="X-API-OID", required=false) ObjectId xOId, 
+   public Object add(
+            @RequestParam("access_token") String accessToken,
+    		@RequestParam(required=false, defaultValue="0") int verbose,
+            @RequestHeader(value="X-API-OID", required=false) ObjectId xOId,
     		@RequestHeader(value="X-API-USERNAME", required=false) String xUsername,
-    		@RequestHeader(value="X-API-IP", required=false) String xIp, @RequestHeader(value="X-API-UID", required=false) ObjectId xUId, 
-    		@RequestHeader(value="X-API-ROLE-TYPE", required=false) Integer roleType,@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,
+    		@RequestHeader(value="X-API-IP", required=false) String xIp,
+            @RequestHeader(value="X-API-UID", required=false) ObjectId xUId,
+    		@RequestHeader(value="X-API-ROLE-TYPE", required=false) Integer roleType,
+            @RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,
     		@Valid @RequestBody RuleCreateBean ruleCb) {
 	    	if (this.ruleService.isRulePhenomenonExists(oId, ruleCb.getFaultDescription())) {
 	    		throw new ErrorCodeException(ErrorCode.RESOURCE_NAME_ALREADY_EXISTS, new Object[] { ruleCb.getFaultDescription() });
 	    	}
-    	  	Rule rule = (Rule)this.mapper.convertValue(ruleCb, Rule.class);
+    	  	Rule rule = this.mapper.convertValue(ruleCb, Rule.class);
 	      	this.ruleService.createRule(rule, oId);
-	      	this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.CREATE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString() );
+	      	logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.CREATE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString() );
 	      	return new OnlyResultDTO(rule);
       }
-    
-    //update the rule info
+
+    /**
+     * 更新规则信息
+     * @param id
+     * @param accessToken
+     * @param rule
+     * @param oId
+     * @param xUsername
+     * @param xIp
+     * @param xUId
+     * @param roleType
+     * @return
+     */
     @RequestMapping(value={"/{id}"}, method={org.springframework.web.bind.annotation.RequestMethod.PUT})
     @ResponseBody
-    public Object update(@PathVariable ObjectId id,@RequestParam("access_token") String accessToken, @RequestBody Rule rule,
-    		@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,@RequestHeader(value="X-API-USERNAME", required=false) String xUsername,
-    		@RequestHeader(value="X-API-IP", required=false) String xIp, @RequestHeader(value="X-API-UID", required=false) ObjectId xUId,
+    public Object update(
+            @PathVariable ObjectId id,
+            @RequestParam("access_token") String accessToken,
+            @RequestBody Rule rule,
+    		@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,
+            @RequestHeader(value="X-API-USERNAME", required=false) String xUsername,
+    		@RequestHeader(value="X-API-IP", required=false) String xIp,
+            @RequestHeader(value="X-API-UID", required=false) ObjectId xUId,
     		@RequestHeader(value="X-API-ROLE-TYPE", required=false) Integer roleType){
     	rule.setId(id);
     	Rule oldRule = this.ruleService.getRuleById(id,oId);
@@ -108,27 +157,38 @@ public class RuleController {
     	logger.info("id:{}, code:{}, uId:{}, ruleId:{} ",oId, LogCode.UPDATE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString());
     	return new OnlyResultDTO(rule);
     }
-    
-    //delete a rule by the id
+
+    /**
+     * 删除规则信息
+     * @param id
+     * @param accessToken
+     * @param oId
+     * @param xUsername
+     * @param xIp
+     * @param xUId
+     * @param roleType
+     * @return
+     */
     @RequestMapping(value={"/{id}"}, method={org.springframework.web.bind.annotation.RequestMethod.DELETE})
     @ResponseBody
-    public Object deleteById(@PathVariable ObjectId id,@RequestParam("access_token") String accessToken,
-    		@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,@RequestHeader(value="X-API-USERNAME", required=false) String xUsername,
-    		@RequestHeader(value="X-API-IP", required=false) String xIp, @RequestHeader(value="X-API-UID", required=false) ObjectId xUId,
+    public Object deleteById(
+            @PathVariable ObjectId id,
+            @RequestParam("access_token") String accessToken,
+    		@RequestParam(value="oid", defaultValue="54BCA345DA08A0075C000001") ObjectId oId,
+            @RequestHeader(value="X-API-USERNAME", required=false) String xUsername,
+    		@RequestHeader(value="X-API-IP", required=false) String xIp,
+            @RequestHeader(value="X-API-UID", required=false) ObjectId xUId,
     		@RequestHeader(value="X-API-ROLE-TYPE", required=false) Integer roleType){
     	Rule rule = this.ruleService.getRuleById(id,oId);
     	if(rule==null){
     		throw new ErrorCodeException(ErrorCode.RESOURCE_DOES_NOT_EXIST, new Object[] { id });
     	}
     	this.ruleService.deleteRule(id, oId);
-    	this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ruleId:{} ", oId, LogCode.DELETE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString());
+    	logger.info("id:{}, code:{}, uId:{}, userName:{}, ruleId:{} ", oId, LogCode.DELETE_RULE_OK, xUId, xUsername, xIp, rule.getId().toString());
     	OnlyResultDTO result = new OnlyResultDTO();
     	Map<String,ObjectId> resultMap = new HashMap<String,ObjectId>();
     	resultMap.put("id", id);
     	result.setResult(resultMap);
     	return result;
     }
-    
-    
-    
 }

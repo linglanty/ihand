@@ -1,16 +1,15 @@
 package cn.com.dj.dao;
 
-import java.util.List;
-
-import org.bson.types.ObjectId;
-
 import cn.com.dj.dto.Fault;
 import cn.com.dj.dto.FaultQueryBean;
+import org.bson.types.ObjectId;
+
+import java.util.List;
 
 public interface FaultDao {
 
 	//get all fault info
-	public List<Fault> getAllFaultsList(ObjectId oid);
+	List<Fault> getAllFaultsList(ObjectId oid);
 	
 	/**
 	 * get faults per page
@@ -20,19 +19,17 @@ public interface FaultDao {
 	 * @param limit
 	 * @return
 	 */
-	public List<Fault> getFualtsBypage(ObjectId oId,FaultQueryBean fqb, int skip, int limit);
+	List<Fault> getFualtsBypage(ObjectId oId, FaultQueryBean fqb, int skip, int limit);
 	
 	//get all unhandled fault info
-	public List<Fault> getAllunHandledFaultList(ObjectId oid) ;
+	List<Fault> getAllunHandledFaultList(ObjectId oid) ;
 	
 	//Get the fault info by the fault id
-	public Fault getFaultInfoById(ObjectId faultId,ObjectId oid);
+	Fault getFaultInfoById(ObjectId faultId, ObjectId oid);
 	
 	//create a new rule
-	public void createFault(Fault fault,ObjectId oid);
+	void createFault(Fault fault, ObjectId oid);
 	
 	// modify the fault status
-	public void modifyFaultStatus(Fault fault,ObjectId oid);
-	
-	
+	void modifyFaultStatus(Fault fault, ObjectId oid);
 }

@@ -48,21 +48,30 @@ public class PumpController {
 	@Autowired
 	ObjectMapper mapper;
 
-	// list all of the pumps of a model
+	/**
+	 * 列出某个机型下的所有的实体泵信息
+	 * @param accessToken
+	 * @param modelId
+	 * @param oId
+     * @return
+     */
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	@ResponseBody
 	public Object getAllPumpOverviewInfo(
 			@RequestParam("access_token") String accessToken,
 			@RequestParam(value = "modelId", required = true) ObjectId modelId,
 			@RequestParam(value = "oid", defaultValue = "54BCA345DA08A0075C000001") ObjectId oId) {
-		// System.out.println("pump in...");
 		List<Pump> list = pumpService.getPumpListByModelId(modelId, oId);
-		// System.out.println("pump out...");
-
 		return new BasicResultDTO((long) list.size(), 0, list.size(), list);
 	}
 
-	// get the pump info by the pump id
+	/**
+	 * 通过泵的主键获取泵详细信息
+	 * @param id
+	 * @param accessToken
+	 * @param oId
+     * @return
+     */
 	@RequestMapping(value = { "/{id}" }, method = { org.springframework.web.bind.annotation.RequestMethod.GET })
 	@ResponseBody
 	public Object getPumpById(
@@ -75,6 +84,19 @@ public class PumpController {
 		return result;
 	}
 
+	/**
+	 * 添加一个泵信息
+	 * @param accessToken
+	 * @param verbose
+	 * @param xOId
+	 * @param xUsername
+	 * @param xIp
+	 * @param xUId
+	 * @param roleType
+	 * @param oId
+     * @param pumpCb
+     * @return
+     */
 	@RequestMapping(value = { "" }, method = { org.springframework.web.bind.annotation.RequestMethod.POST })
 	@ResponseBody
 	public Object add(
@@ -99,7 +121,18 @@ public class PumpController {
 		return new OnlyResultDTO(pump);
 	}
 
-	// update the pump info
+	/**
+	 * 更新泵信息
+	 * @param id
+	 * @param accessToken
+	 * @param pump
+	 * @param oId
+	 * @param xUsername
+	 * @param xIp
+	 * @param xUId
+     * @param roleType
+     * @return
+     */
 	@RequestMapping(value = { "/{id}" }, method = { org.springframework.web.bind.annotation.RequestMethod.PUT })
 	@ResponseBody
 	public Object update(
@@ -124,12 +157,22 @@ public class PumpController {
 					new Object[] { pump.getPumpName() });
 		}
 		this.pumpService.modifyPump(pump, oId);
-		this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.UPDATE_PUMP_OK, xUId, xUsername,
+		logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, ruleId:{} ", oId, LogCode.UPDATE_PUMP_OK, xUId, xUsername,
 				xIp, pump.getId().toString());
 		return new OnlyResultDTO(pump);
 	}
 
-	// delete a pump by the id
+	/**
+	 * 删除泵
+	 * @param id
+	 * @param accessToken
+	 * @param oId
+	 * @param xUsername
+	 * @param xIp
+	 * @param xUId
+     * @param roleType
+     * @return
+     */
 	@RequestMapping(value = { "/{id}" }, method = { org.springframework.web.bind.annotation.RequestMethod.DELETE })
 	@ResponseBody
 	public Object deleteById(
@@ -146,7 +189,7 @@ public class PumpController {
 					new Object[] { id });
 		}
 		this.pumpService.deletePump(id, oId);
-		this.logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, pumpId:{} ", oId, LogCode.DELETE_PUMP_OK, xUId, xUsername,
+		logger.info("id:{}, code:{}, uId:{}, userName:{}, ip:{}, pumpId:{} ", oId, LogCode.DELETE_PUMP_OK, xUId, xUsername,
 				xIp, pump.getId().toString());
 		OnlyResultDTO result = new OnlyResultDTO();
 		Map<String, ObjectId> resultMap = new HashMap<String, ObjectId>();
