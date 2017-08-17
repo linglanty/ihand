@@ -6,9 +6,12 @@
 
 package cn.com.zlz.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import cn.com.dj.model.Fault;
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.dn4.utils.DateUtils;
+import cn.com.zlz.dao.FaultDAO;
+import cn.com.zlz.dto.FaultQueryBean;
+import cn.com.zlz.util.QueryGenerator;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +23,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import cn.com.dj.model.*;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.dn4.utils.DateUtils;
-import cn.com.zlz.dao.FaultDAO;
-import cn.com.zlz.dto.FaultQueryBean;
-import cn.com.zlz.util.QueryGenerator;
+import java.util.List;
 
 /**
  * 
@@ -72,9 +70,12 @@ public class FaultService extends MongoService implements FaultDAO {
 
 	@Override
 	public void createFault(Fault fault, ObjectId oid) {
+
 		MongoTemplate mt = this.factory.getMongoTemplateByOId(oid);
 		fault.setCreateTime(Long.valueOf(DateUtils.getUTC()));
+
 		fault.setStatus(0);
+
 		mt.save(fault, this.collectionName);
 		logger.info("create a FaultInfo info to mongo id = " + fault.getId());
 	}

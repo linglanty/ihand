@@ -19,7 +19,7 @@ public class RpcClient {
         try{
             String url = ip +":8080/api/task/listcheck";
             Boolean object = template.getForObject(url, Boolean.class);
-            if (object == true) {
+            if (object == Boolean.TRUE) {
                 return true;
             }
         }catch (Exception e) {

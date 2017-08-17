@@ -107,7 +107,7 @@ public class TaskScheduler {
     }
 
     //分配任务
-    private Map<HeartBeatInfo, List<ObjectId>> allocateTasks (List<HeartBeatInfo> onlineMachines, List<ObjectId> onlineDevices) {
+    private Map<HeartBeatInfo, List<ObjectId>> allocateTasks(List<HeartBeatInfo> onlineMachines, List<ObjectId> onlineDevices) {
         int taskCount = onlineDevices.size();
         double sum = 0;
         for (HeartBeatInfo machine : onlineMachines) {
@@ -116,12 +116,16 @@ public class TaskScheduler {
         Map<HeartBeatInfo, List<ObjectId>> taskMap = Maps.newHashMap();
         int index = 0;
         for (HeartBeatInfo machine : onlineMachines) {
+
             double taskPercentage = computeCpuUsage(machine)/sum;
+
             int end = Math.min(index + (int) Math.round(taskPercentage), taskCount);
             if (index >= end) {
                 break;
             }
+
             taskMap.put(machine, onlineDevices.subList(index, end));
+            index = end;
         }
         return taskMap;
     }

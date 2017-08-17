@@ -14,7 +14,7 @@ public class FaultReason {
 	// 处理办法
 	private String handleMethod;
 
-	//维修人员应该剧本的技能
+	//维修人员应该具备的技能
 	private String repairmanMajor;
 
 	//持续时间

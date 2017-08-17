@@ -56,6 +56,8 @@ import java.util.Set;
  *  Model 是Machine的模型信息( 一一对应的关系 ), 它里面用来定义 Machine里的二进制 对应的是什么数据(描述) 保存到数据库中的数据就转换成了 <变量名,值>, 不再是plc里的原生数据
  *  Pump 泵 (温度、电压、电流、水压、发动机转速等等) 配置泵的信息时, 会从model中筛选出是其自己的参数
  *  Rule : 本来应该是 根据泵设定的参数设置 故障规则; 但是实际上是根据Model的参数来设置故障规则,这些参数和泵的参数一致。 Rule上有 modelId 和 ruleId
+ *
+ *  原则上,是应该有泵类型pumpType的,它定义一种类型的泵,然后每个Pump都带有泵类型信息。
  */
 @Service
 public class DetectService {
@@ -96,28 +98,24 @@ public class DetectService {
 
 	public void detectFaults(Device onlineDevice)
 	{
-        //无在线网关的时候退出
-		if(onlineDevice == null) {
+        if(onlineDevice == null) {
             return;
         }
-
+        ObjectId oid=new ObjectId(oId);
 		try {
-            ObjectId oid=new ObjectId(oId);
-
             //获取在线设备 并设置上面的Map以加速查询
             List<Machine> onlineMachines = getOnlineMachines(onlineDevice);
-
             if (CollectionUtils.isEmpty(onlineMachines)) {
                 //没有在线设备时, 直接返回
                 return;
             }
+
             Map<ObjectId, ObjectId> machineId2ModelId = Maps.newHashMap();
             Map<ObjectId, Machine> machineId2Machine = Maps.newHashMap();
             for(Machine machine : onlineMachines) {
                 machineId2ModelId.put(machine.getId(), machine.getModelId());
                 machineId2Machine.put(machine.getId(), machine);
             }
-
             //如果没有在线的设备返回
             if (MapUtils.isEmpty(machineId2Machine)) {
                 return;
@@ -131,23 +129,11 @@ public class DetectService {
                 machineId2Device.put(machine.getId(), onlineDevice);
             }
 
-            //找出所有出故障的 pump 并放在map中以便后面故障检测时剔除
-            // （当是预警时，希望可以再进行故障检测；当是故障时不能在进行故障检测）
-            List<Fault> faults = this.faultService.getAllunHandledFaultList(new ObjectId(oId));
-            Map<ObjectId, LevelEnum> errorPumps = Maps.newHashMap();
-            for(Fault fault : faults) {
-                if(!errorPumps.containsKey(fault.getPumpId())) {
-                    //报警可以被故障覆盖
-                    errorPumps.put(fault.getPumpId(), LevelEnum.findLevel(fault.getLevel()));
-                } else {
-                    if(errorPumps.get(fault.getPumpId()) == LevelEnum.WARN) {
-                        errorPumps.put(fault.getPumpId(), LevelEnum.FAULT);
-                    }
-                }
-            }
-
-            // 由ModelId来获取rule列表
-            Map<ObjectId,List<Rule>> modelId2Rule = queryRules(modelIds);
+            //目前已经故障的泵
+            Map<ObjectId, LevelEnum> errorPumps = getHasFaultedPumps();
+            
+            // 由ModelId来获取rule列表 获取一个PLC上所有泵的故障规则信息
+            Map<ObjectId,List<Rule>> modelId2Rule = queryRulesByModelIds(modelIds);
 
             //获取实时数据
             Map<ObjectId, Map<String, RealTimeVariable>> machineId2realTimeDataMap = realTimeDataService.getAllRealTimeMap(oid, Lists.newArrayList(machineId2Machine.keySet()));
@@ -175,15 +161,12 @@ public class DetectService {
 
                     //规则判断 是否出现了这种故障类型的故障。
                     if (LogicJudg.isFault(faultPhenomenon, realTimeVariables)) {
-
                         //当这个泵仍然在报警状态是则跳过
                         if(errorPumps.get(eachRule.getPumpId()) == LevelEnum.WARN && LevelEnum.findLevel(eachRule.getLevel()) == LevelEnum.WARN) {
                             continue;
                         }
-
                         //寻找故障原因
                         FaultReason faultReason = LogicJudg.findReason(eachRule.getFaultReason(), realTimeVariables);
-
                         // 带有持续时间的规则
                         if(faultReason != null && faultReason.getDuration() != null && faultReason.getDuration() != 0) {
                             //查询上次出现的时间
@@ -196,10 +179,8 @@ public class DetectService {
                                 this.faultDumpService.createFaultDump(dump, oid);
                                 continue;
                             }
-
                             //获取持续的时间
                             long duration_time = DateUtils.getUTC() - dump.getCreateTime();
-
                             //当间隔小于这个设定的期限时，推迟判断
                             if(duration_time < faultReason.getDuration()){
                                 continue;
@@ -211,7 +192,6 @@ public class DetectService {
                                 }
                             }
                         }
-
                         // 记录故障信息
                         saveFaultInfo(onlineDevice, oid, machineId2Machine, machineId2realTimeData, realTimeVariables, eachRule, faultReason);
                         errorPumps.put(eachRule.getPumpId(), LevelEnum.findLevel(eachRule.getLevel()));
@@ -221,6 +201,25 @@ public class DetectService {
         } catch (Exception e) {
             logger.warn("故障检测失败" ,e);
         }
+    }
+
+    //获取已经是故障状态的泵
+    private Map<ObjectId, LevelEnum> getHasFaultedPumps() {
+        //找出所有出故障的 pump 并放在map中以便后面故障检测时剔除
+        // （当是预警时，希望可以再进行故障检测；当是故障时不能在进行故障检测）
+        List<Fault> faults = this.faultService.getAllunHandledFaultList(new ObjectId(oId));
+        Map<ObjectId, LevelEnum> errorPumps = Maps.newHashMap();
+        for(Fault fault : faults) {
+            if(!errorPumps.containsKey(fault.getPumpId())) {
+                //报警可以被故障覆盖
+                errorPumps.put(fault.getPumpId(), LevelEnum.findLevel(fault.getLevel()));
+            } else {
+                if(errorPumps.get(fault.getPumpId()) == LevelEnum.WARN) {
+                    errorPumps.put(fault.getPumpId(), LevelEnum.FAULT);
+                }
+            }
+        }
+        return errorPumps;
     }
 
     private void saveFaultInfo(Device onlineDevice, ObjectId oid, Map<ObjectId, Machine> machineId2Machine, Map.Entry<ObjectId, Map<String, RealTimeVariable>> machineId2realTimeData,
@@ -313,7 +312,7 @@ public class DetectService {
 		 return vars;
 	}
 	
-	private Map<ObjectId,List<Rule>> queryRules(Set<ObjectId> modelIds){
+	private Map<ObjectId,List<Rule>> queryRulesByModelIds(Set<ObjectId> modelIds){
         Map<ObjectId, List<Rule>> modelId2Rules = Maps.newHashMap();
 		List<Rule> rules = ruleService.getRulesByRuleIds(Lists.newArrayList(modelIds),new ObjectId(oId));
 		for(Rule rule : rules) {

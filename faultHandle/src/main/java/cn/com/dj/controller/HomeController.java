@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Controller
-@RequestMapping({"api/task/"})
+@RequestMapping()
 public class HomeController {
 
     @Autowired
@@ -37,7 +37,7 @@ public class HomeController {
      * @param request api/task/listcheck
      * @return
      */
-    @RequestMapping(value = { "listcheck", "listcheck.json" }, method = RequestMethod.GET)
+    @RequestMapping(value = { "api/task/listcheck", "api/task/listcheck.json" }, method = RequestMethod.GET)
     public Boolean listcheck(HttpServletRequest request) {
         return true;
     }
@@ -50,14 +50,14 @@ public class HomeController {
      * @param task
      * @return
      */
-    @RequestMapping(value={"execTasks"}, method={RequestMethod.POST})
+    @RequestMapping(value={"api/task/execTasks"}, method={RequestMethod.POST})
     @ResponseBody
     public Boolean execTasks(Task task) {
         if (task == null) {
             return false;
         }
         final ObjectId oId = new ObjectId(this.oId);
-        List<ObjectId> tasks = task.getTasks();
+        List<ObjectId> tasks = task.getTasks();//30个元素
         for (final ObjectId deviceId : tasks) {
             executorService.submit(new Runnable() {
                 @Override public void run() {
