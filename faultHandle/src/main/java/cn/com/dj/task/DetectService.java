@@ -107,7 +107,7 @@ public class DetectService {
             }
 
             //目前已经故障的泵
-            Map<ObjectId, LevelEnum> errorPumps = getHasFaultedPumps();
+            Map<ObjectId, LevelEnum> errorPumps = getFaultedPumps();
             //获取plc下的所有泵
             List<Pump> pumps = pumpService.getPumpListByModelId(onlineMachine.getModelId(), oid);
 
@@ -172,7 +172,7 @@ public class DetectService {
     }
 
     //获取已经是故障状态的泵
-    private Map<ObjectId, LevelEnum> getHasFaultedPumps() {
+    private Map<ObjectId, LevelEnum> getFaultedPumps() {
         //找出所有出故障的 pump 并放在map中以便后面故障检测时剔除
         // （当是预警时，希望可以再进行故障检测；当是故障时不能在进行故障检测）
         List<Fault> faults = this.faultService.getAllunHandledFaultList(new ObjectId(oId));
