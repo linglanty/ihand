@@ -30,7 +30,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -104,63 +100,34 @@ public class DetectService {
         ObjectId oid=new ObjectId(oId);
 		try {
             //获取在线设备 并设置上面的Map以加速查询
-            List<Machine> onlineMachines = getOnlineMachines(onlineDevice);
-            if (CollectionUtils.isEmpty(onlineMachines)) {
+            Machine onlineMachine = queryMachine(onlineDevice);
+            if (onlineMachine == null) {
                 //没有在线设备时, 直接返回
                 return;
             }
 
-            Map<ObjectId, ObjectId> machineId2ModelId = Maps.newHashMap();
-            Map<ObjectId, Machine> machineId2Machine = Maps.newHashMap();
-            for(Machine machine : onlineMachines) {
-                machineId2ModelId.put(machine.getId(), machine.getModelId());
-                machineId2Machine.put(machine.getId(), machine);
-            }
-            //如果没有在线的设备返回
-            if (MapUtils.isEmpty(machineId2Machine)) {
-                return;
-            }
-
-            //用于通过 modelId 查询 rule 并获得由 machineID 到 device 的映射
-            Set<ObjectId> modelIds = Sets.newHashSet();
-            Map<ObjectId, Device> machineId2Device= Maps.newHashMap();
-            for(Machine machine : onlineMachines) {
-                modelIds.add(machine.getModelId());
-                machineId2Device.put(machine.getId(), onlineDevice);
-            }
-
             //目前已经故障的泵
             Map<ObjectId, LevelEnum> errorPumps = getHasFaultedPumps();
-            
-            // 由ModelId来获取rule列表 获取一个PLC上所有泵的故障规则信息
-            Map<ObjectId,List<Rule>> modelId2Rule = queryRulesByModelIds(modelIds);
+            //获取plc下的所有泵
+            List<Pump> pumps = pumpService.getPumpListByModelId(onlineMachine.getModelId(), oid);
 
-            //获取实时数据
-            Map<ObjectId, Map<String, RealTimeVariable>> machineId2realTimeDataMap = realTimeDataService.getAllRealTimeMap(oid, Lists.newArrayList(machineId2Machine.keySet()));
-
-            //规则匹配  对匹配成功的故障进行插入数据库
-            for(Map.Entry<ObjectId, Map<String, RealTimeVariable>> machineId2realTimeData : machineId2realTimeDataMap.entrySet()) {
-                //对于每个设备的数据
-                Map<String,RealTimeVariable> realTimeVariables = machineId2realTimeData.getValue();
-                //对于每个设备的Rule
-                List<Rule> rules = modelId2Rule.get(machineId2ModelId.get(machineId2realTimeData.getKey()));
-                if(CollectionUtils.isEmpty(rules)) {
+            //获取 plc上报的实时数据
+            Map<String, RealTimeVariable> realTimeVariables = realTimeDataService.getAllRealTimeMap(oid, onlineMachine.getId());
+            for (Pump pump : pumps) {
+                //过滤出泵的参数数据
+                Map<String, RealTimeVariable> pumpRealTimeVariables = filterPumpInfos(realTimeVariables, pump);
+                if(errorPumps.get(pump.getId()) == LevelEnum.FAULT) {
                     continue;
                 }
-                //对于同种设备的每个Rule
-                for(Rule eachRule : rules) {
+                List<Rule> rules = ruleService.getRulesByPumpId(pump.getId(), oid);
+                for (Rule eachRule : rules) {
                     List<FaultParameter> faultPhenomenon = eachRule.getFaultPhenomenon();
                     //如果故障现象中没有参数就不进行扫描此故障
                     if(CollectionUtils.isEmpty(faultPhenomenon)) {
                         continue;
                     }
-                    //当这个泵已经处在故障状态那就直接跳过
-                    if(errorPumps.get(eachRule.getPumpId()) == LevelEnum.FAULT) {
-                        continue;
-                    }
-
                     //规则判断 是否出现了这种故障类型的故障。
-                    if (LogicJudg.isFault(faultPhenomenon, realTimeVariables)) {
+                    if (LogicJudg.isFault(faultPhenomenon, pumpRealTimeVariables)) {
                         //当这个泵仍然在报警状态是则跳过
                         if(errorPumps.get(eachRule.getPumpId()) == LevelEnum.WARN && LevelEnum.findLevel(eachRule.getLevel()) == LevelEnum.WARN) {
                             continue;
@@ -193,9 +160,10 @@ public class DetectService {
                             }
                         }
                         // 记录故障信息
-                        saveFaultInfo(onlineDevice, oid, machineId2Machine, machineId2realTimeData, realTimeVariables, eachRule, faultReason);
+                        saveFaultInfo(onlineDevice, oid, onlineMachine, realTimeVariables, eachRule, faultReason);
                         errorPumps.put(eachRule.getPumpId(), LevelEnum.findLevel(eachRule.getLevel()));
                     }
+
                 }
             }
         } catch (Exception e) {
@@ -222,7 +190,28 @@ public class DetectService {
         return errorPumps;
     }
 
-    private void saveFaultInfo(Device onlineDevice, ObjectId oid, Map<ObjectId, Machine> machineId2Machine, Map.Entry<ObjectId, Map<String, RealTimeVariable>> machineId2realTimeData,
+    private Map<String, RealTimeVariable> filterPumpInfos(Map<String, RealTimeVariable> realTimeVariables, Pump pump) {
+        Map<String, RealTimeVariable> result = Maps.newHashMapWithExpectedSize(realTimeVariables.size());
+        List<PumpVal> vars = pump.getVars();
+        List<PumpVal> copyVars = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(vars)) {
+            copyVars.addAll(vars);
+        }
+        List<PumpVal> otherVars = pump.getOtherVars();
+        if (CollectionUtils.isNotEmpty(otherVars)) {
+            copyVars.addAll(otherVars);
+        }
+        for (PumpVal pumpVal : copyVars) {
+            if (realTimeVariables.containsKey(pumpVal.get_id())) {
+                result.put(pumpVal.get_id(), realTimeVariables.get(pumpVal.get_id()));
+            }
+        }
+        return result;
+    }
+
+
+
+    private void saveFaultInfo(Device onlineDevice, ObjectId oid, Machine plc,
             Map<String, RealTimeVariable> realTimeVariables, Rule eachRule, FaultReason faultReason) {
         Fault fault=new Fault();
         if(faultReason != null) {
@@ -235,8 +224,7 @@ public class DetectService {
             fault.setRepairmanMajor("电气,机械,自控");
         }
         //设置ruleId plcId 和 plc名称
-        Machine plc = machineId2Machine.get(machineId2realTimeData.getKey());
-        fault.setMachineId(machineId2realTimeData.getKey());
+        fault.setMachineId(plc.getId());
         fault.setMachineName(plc.getName());
         fault.setRuleId(eachRule.getId());
 
@@ -253,7 +241,7 @@ public class DetectService {
         fault.setPumpId(eachRule.getPumpId());
         Pump pump = pumpService.getPumpById(eachRule.getPumpId(), oid);
         // 获得故障参数的额定值和实际值
-        List<InfoVarValue> infovars = DetectService.returnRealRateValue(eachRule, pump, realTimeVariables);
+        List<InfoVarValue> infovars = DetectService.generateRealRateValue(eachRule, pump, realTimeVariables);
         fault.setVars(infovars);
         //设置泵名
         fault.setPumpName(pump.getPumpName());
@@ -270,33 +258,33 @@ public class DetectService {
         this.faultService.createFault(fault, oid);
     }
 
+
     //获取所有实时值 包括现象参数和所有原因里的参数。
-	public static List<InfoVarValue> returnRealRateValue(Rule eachRule, Pump pump, Map<String,RealTimeVariable> realtimeVariables) {
-		 
-		 Set<String> allFaultParameterSet=new HashSet<String>();
-		 List<FaultParameter> phenomenonFaultParameters=eachRule.getFaultPhenomenon();
-		 for(FaultParameter parameter:phenomenonFaultParameters){
-			 List<FaultVar>faultVars=parameter.getVars();
+	public static List<InfoVarValue> generateRealRateValue(Rule eachRule, Pump pump, Map<String,RealTimeVariable> realtimeVariables) {
+		 Set<String> allFaultParameterSet = Sets.newHashSet();
+		 List<FaultParameter> phenomenonFaultParameters = eachRule.getFaultPhenomenon();
+		 for(FaultParameter parameter : phenomenonFaultParameters){
+			 List<FaultVar>faultVars = parameter.getVars();
 			 for(FaultVar var:faultVars){
 				 allFaultParameterSet.add(var.get_id());
 			 }
 		 }
-		 List<FaultReason> reasonsFaultParameters=eachRule.getFaultReason();
-		 for(FaultReason reason:reasonsFaultParameters){
-			 List<FaultParameter> reasonParameters=reason.getVars();
-			 for(FaultParameter parameter:reasonParameters){
-				 List<FaultVar>faultVars=parameter.getVars();
-				 for(FaultVar var:faultVars){
+		 List<FaultReason> reasonsFaultParameters = eachRule.getFaultReason();
+		 for(FaultReason reason : reasonsFaultParameters) {
+			 List<FaultParameter> reasonParameters = reason.getVars();
+			 for(FaultParameter parameter : reasonParameters) {
+				 List<FaultVar>faultVars = parameter.getVars();
+				 for(FaultVar var : faultVars) {
 					 allFaultParameterSet.add(var.get_id());
 				 }
 			 }
 		 }
-		 List<InfoVarValue> vars=new ArrayList<InfoVarValue>();
-		 for(String param:allFaultParameterSet){
-			 InfoVarValue info=new InfoVarValue();
+		 List<InfoVarValue> vars = Lists.newArrayList();
+		 for(String param : allFaultParameterSet){
+			 InfoVarValue info = new InfoVarValue();
 			 info.setId(param);
 			 info.setRatevalue("0");
-			 for(PumpVal pumpVal:pump.getVars()) {
+			 for(PumpVal pumpVal : pump.getVars()) {
 				 if(pumpVal.get_id().equals(param)){
 					 info.setRatevalue(pumpVal.getValue());
 					 info.setName(pumpVal.getName());
@@ -311,34 +299,15 @@ public class DetectService {
 		 
 		 return vars;
 	}
-	
-	private Map<ObjectId,List<Rule>> queryRulesByModelIds(Set<ObjectId> modelIds){
-        Map<ObjectId, List<Rule>> modelId2Rules = Maps.newHashMap();
-		List<Rule> rules = ruleService.getRulesByRuleIds(Lists.newArrayList(modelIds),new ObjectId(oId));
-		for(Rule rule : rules) {
-			List<Rule> newRule=modelId2Rules.get(rule.getModelId());
-			if(newRule==null){
-				newRule = Lists.newArrayList();
-				newRule.add(rule);
-			}else {
-				newRule.add(rule);
-			}
-            modelId2Rules.put(rule.getModelId(), newRule);
-		}
-		Iterator<ObjectId> iterator = modelId2Rules.keySet().iterator();
-		while(iterator.hasNext()) {
-			ObjectId id=iterator.next();
-			if(modelId2Rules.get(id) == null)
-				iterator.remove();
-		}
-        return modelId2Rules;
-	}
-	
-	private List<Machine> getOnlineMachines(Device device)
+
+	private Machine queryMachine(Device device)
 	{
 		// 通过device来筛选出在线machine
 		List<Machine> machines = this.machineService.getOnlineMachines(new ObjectId(oId), Lists.newArrayList(device.getId()));
-        return machines;
+        if(CollectionUtils.isEmpty(machines)) {
+            return null;
+        }
+        return machines.get(0);
 	}
 }
 

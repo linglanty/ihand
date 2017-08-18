@@ -6,8 +6,10 @@
 
 package cn.com.dj.service;
 
-import java.util.List;
-
+import cn.com.dj.dao.RuleDao;
+import cn.com.dj.dto.Rule;
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.common.util.UpdateUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +20,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import cn.com.dj.dao.RuleDao;
-import cn.com.dj.dto.Rule;
-import cn.com.inhand.common.model.Machine;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.common.util.UpdateUtils;
-import cn.com.inhand.dn4.utils.DateUtils;
+import java.util.List;
 
 /**
  *
@@ -80,18 +77,20 @@ public class RuleService extends MongoService implements RuleDao{
 
 	@Override
 	public boolean isRulePhenomenonExists(ObjectId oId, String name) {
-		// TODO Auto-generated method stub
 		Query query = Query.query(Criteria.where("faultPhenomenon").is(name));
 	    return exist(oId, query, "model");
 	}
 
 	@Override
-	public List<Rule> getRulesByRuleIds(List<ObjectId> modelIds, ObjectId oId) {
-		// TODO Auto-generated method stub
+	public List<Rule> getRulesByRuleIds(ObjectId modelId, ObjectId oId) {
 		MongoTemplate template = this.factory.getMongoTemplateByOId(oId);
-		return template.find(Query.query(Criteria.where("modelId").in(modelIds)), Rule.class, this.collectionName);
-		
+		return template.find(Query.query(Criteria.where("modelId").is(modelId)), Rule.class, this.collectionName);
 	}
 
+	@Override
+	public List<Rule> getRulesByPumpId(ObjectId pumpId,ObjectId oid) {
+		MongoTemplate template = this.factory.getMongoTemplateByOId(oid);
+		return template.find(Query.query(Criteria.where("pumpId").is(pumpId)), Rule.class, this.collectionName);
+	}
     
 }

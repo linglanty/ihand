@@ -17,13 +17,21 @@ public interface RuleDao {
 	
 	/**
 	 * get the rule list of a Model
-	 * @param modelIds
+	 * @param modelId
 	 * @param oid
 	 * @return
 	 */
-	public List<Rule> getRulesByRuleIds(List<ObjectId> modelIds,ObjectId oid) ;
-	
-	
+	public List<Rule> getRulesByRuleIds(ObjectId modelId,ObjectId oid) ;
+
+	/**
+	 * get the rule list of a Model
+	 * @param pumpId
+	 * @param oid
+	 * @return
+	 */
+	public List<Rule> getRulesByPumpId(ObjectId pumpId,ObjectId oid) ;
+
+
 	/**
 	 * is the rule phenomenon exist?
 	 * @param oId
