@@ -63,7 +63,7 @@ public class Fault {
 	//
 	private Location location;
 
-	//状态: 故障是否已经被处理, 1:未被处理,2:已处理
+	//状态: 故障是否已经被处理, 0:未被处理,2:已处理
 	private int status;
 
 	//故障发生时记录的参数值,(名称、真实参数、规则参数)

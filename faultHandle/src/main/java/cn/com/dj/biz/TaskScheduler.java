@@ -59,7 +59,7 @@ import java.util.Map;
  */
 @Service
 public class TaskScheduler {
-    private Logger logger = LoggerFactory.getLogger(TaskScheduler.class);
+    private static Logger logger = LoggerFactory.getLogger(TaskScheduler.class);
 
     @Autowired
     private HeartBeatDao heartBeatDao;

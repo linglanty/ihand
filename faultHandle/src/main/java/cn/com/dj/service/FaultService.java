@@ -71,7 +71,6 @@ public class FaultService extends MongoService implements FaultDao {
 
 	@Override
 	public void createFault(Fault fault, ObjectId oid) {
-
 		MongoTemplate mt = this.factory.getMongoTemplateByOId(oid);
 		fault.setCreateTime(Long.valueOf(DateUtils.getUTC()));
 		fault.setStatus(0);

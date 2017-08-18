@@ -97,7 +97,7 @@ public class DetectService {
         if(onlineDevice == null) {
             return;
         }
-        ObjectId oid=new ObjectId(oId);
+        ObjectId oid = new ObjectId(oId);
 		try {
             //获取在线设备 并设置上面的Map以加速查询
             Machine onlineMachine = queryMachine(onlineDevice);
@@ -114,14 +114,17 @@ public class DetectService {
             //获取 plc上报的实时数据
             Map<String, RealTimeVariable> realTimeVariables = realTimeDataService.getAllRealTimeMap(oid, onlineMachine.getId());
             for (Pump pump : pumps) {
+
                 //过滤出泵的参数数据
                 Map<String, RealTimeVariable> pumpRealTimeVariables = filterPumpInfos(realTimeVariables, pump);
+
                 if(errorPumps.get(pump.getId()) == LevelEnum.FAULT) {
                     continue;
                 }
+                //根据泵id找出 此对应型号的泵故障规则列表
                 List<Rule> rules = ruleService.getRulesByPumpId(pump.getId(), oid);
-                for (Rule eachRule : rules) {
-                    List<FaultParameter> faultPhenomenon = eachRule.getFaultPhenomenon();
+                for (Rule rule : rules) {
+                    List<FaultParameter> faultPhenomenon = rule.getFaultPhenomenon();
                     //如果故障现象中没有参数就不进行扫描此故障
                     if(CollectionUtils.isEmpty(faultPhenomenon)) {
                         continue;
@@ -129,19 +132,19 @@ public class DetectService {
                     //规则判断 是否出现了这种故障类型的故障。
                     if (LogicJudg.isFault(faultPhenomenon, pumpRealTimeVariables)) {
                         //当这个泵仍然在报警状态是则跳过
-                        if(errorPumps.get(eachRule.getPumpId()) == LevelEnum.WARN && LevelEnum.findLevel(eachRule.getLevel()) == LevelEnum.WARN) {
+                        if(errorPumps.get(rule.getPumpId()) == LevelEnum.WARN && LevelEnum.findLevel(rule.getLevel()) == LevelEnum.WARN) {
                             continue;
                         }
                         //寻找故障原因
-                        FaultReason faultReason = LogicJudg.findReason(eachRule.getFaultReason(), realTimeVariables);
+                        FaultReason faultReason = LogicJudg.findReason(rule.getFaultReason(), realTimeVariables);
                         // 带有持续时间的规则
                         if(faultReason != null && faultReason.getDuration() != null && faultReason.getDuration() != 0) {
                             //查询上次出现的时间
-                            FaultDump dump = this.faultDumpService.getFaultDumpById(eachRule.getId(), faultReason.getId(), oid);
+                            FaultDump dump = this.faultDumpService.getFaultDumpById(rule.getId(), faultReason.getId(), oid);
                             if(dump == null) {
                                 //当之前没出现过的时候，存入数据表备份中
                                 dump=new FaultDump();
-                                dump.setRuleId(eachRule.getId());
+                                dump.setRuleId(rule.getId());
                                 dump.setReasonId(faultReason.getId());
                                 this.faultDumpService.createFaultDump(dump, oid);
                                 continue;
@@ -160,8 +163,8 @@ public class DetectService {
                             }
                         }
                         // 记录故障信息
-                        saveFaultInfo(onlineDevice, oid, onlineMachine, realTimeVariables, eachRule, faultReason);
-                        errorPumps.put(eachRule.getPumpId(), LevelEnum.findLevel(eachRule.getLevel()));
+                        saveFaultInfo(onlineDevice, oid, onlineMachine, realTimeVariables, rule, faultReason);
+                        errorPumps.put(rule.getPumpId(), LevelEnum.findLevel(rule.getLevel()));
                     }
 
                 }

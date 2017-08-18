@@ -23,5 +23,5 @@ public interface TaskLockDao {
      * @return
      */
     @Update("update task_lock set lock_time = now(),ip = #{ip} where lock_time <= #{date}")
-    public int lock(@Param("date") Date date, @Param("ip") String ip);//date = now - 5min
+    public int lock(@Param("date") Date date, @Param("ip") String ip);//date = now - 5min(定时任务的执行周期)
 }
