@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 
 @Controller
 @RequestMapping()
-public class HomeController {
+public class TaskController {
 
     @Autowired
     private DetectService detectService;
@@ -30,7 +30,7 @@ public class HomeController {
     @Value("${config.detect.oid}")
     private String oId;
 
-    private ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     /**
      * 验证机器是否正常运行

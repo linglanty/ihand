@@ -15,7 +15,7 @@ import org.bson.types.ObjectId;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import cn.com.dj.controller.HomeController;
+import cn.com.dj.controller.TaskController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -51,7 +51,7 @@ import java.util.Map;
  *         - 3. 根据每台机机器的 cpu利用率 来为每个机器分配任务 方法{@link TaskScheduler#allocateTasks}
  *         - 4. 将任务列表分别发送给每台机器 方法{@link TaskScheduler#sendTasks}
  *
- *  3. 每个执行任务的机器接受任务的地方:{@link HomeController#execTasks}
+ *  3. 每个执行任务的机器接受任务的地方:{@link TaskController#execTasks}
  *
  *  4. 单个任务的执行在 {@link DetectService#detectFaults}
  *

@@ -122,7 +122,6 @@ private static final Logger logger = LoggerFactory.getLogger(OrderService.class)
 		
 		List<Employee> employeeList = template.find(new Query(), Employee.class);
 
-		
 		Map<Employee, Float> emp2Dis = new HashMap<Employee, Float>();
 		for(Employee emp : employeeList) {
 			float dis = (float) Math.sqrt((longitude-emp.getLongitude())*(longitude-emp.getLongitude())

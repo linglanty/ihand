@@ -4,6 +4,7 @@ import cn.com.dj.dto.Rule;
 import org.bson.types.ObjectId;
 
 import java.util.List;
+import java.util.Map;
 
 public interface RuleDao {
 
@@ -31,6 +32,8 @@ public interface RuleDao {
 	 */
 	public List<Rule> getRulesByPumpId(ObjectId pumpId,ObjectId oid) ;
 
+
+	public Map<ObjectId, List<Rule>> getRulesByPumpIds(List<ObjectId> pumpIds,ObjectId oid);
 
 	/**
 	 * is the rule phenomenon exist?

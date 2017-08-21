@@ -1,5 +1,23 @@
 package cn.com.dj.task;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
 import cn.com.dj.dao.DataDao;
 import cn.com.dj.dao.DeviceDao;
 import cn.com.dj.dao.FaultDao;
@@ -26,20 +44,6 @@ import cn.com.dj.util.LogicJudg;
 import cn.com.inhand.common.model.Device;
 import cn.com.inhand.common.model.Machine;
 import cn.com.inhand.dn4.utils.DateUtils;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import org.apache.commons.collections.CollectionUtils;
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * 执行定时任务
@@ -86,91 +90,114 @@ public class DetectService {
 	
 	@Autowired
 	RealTimeDataDao realTimeDataService;
+
+    private ExecutorService computeExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private ExecutorService saveDataExecutorService = Executors.newCachedThreadPool();
 	
 	@Value("${config.detect.oid}")
 	private String oId;
 
 	private String variableId;//变量ID
 
-	public void detectFaults(Device onlineDevice)
+	public void detectFaults(final Device onlineDevice)
 	{
         if(onlineDevice == null) {
             return;
         }
-        ObjectId oid = new ObjectId(oId);
+        final ObjectId oid = new ObjectId(oId);
 		try {
             //获取在线设备 并设置上面的Map以加速查询
-            Machine onlineMachine = queryMachine(onlineDevice);
+            final Machine onlineMachine = queryMachine(onlineDevice);
             if (onlineMachine == null) {
                 //没有在线设备时, 直接返回
                 return;
             }
 
             //目前已经故障的泵
-            Map<ObjectId, LevelEnum> errorPumps = getFaultedPumps();
+            final Map<ObjectId, LevelEnum> errorPumps = getFaultedPumps();
             //获取plc下的所有泵
-            List<Pump> pumps = pumpService.getPumpListByModelId(onlineMachine.getModelId(), oid);
-
-            //获取 plc上报的实时数据
-            Map<String, RealTimeVariable> realTimeVariables = realTimeDataService.getAllRealTimeMap(oid, onlineMachine.getId());
-            for (Pump pump : pumps) {
-
-                //过滤出泵的参数数据
-                Map<String, RealTimeVariable> pumpRealTimeVariables = filterPumpInfos(realTimeVariables, pump);
-
-                if(errorPumps.get(pump.getId()) == LevelEnum.FAULT) {
-                    continue;
-                }
-                //根据泵id找出 此对应型号的泵故障规则列表
-                List<Rule> rules = ruleService.getRulesByPumpId(pump.getId(), oid);
-                for (Rule rule : rules) {
-                    List<FaultParameter> faultPhenomenon = rule.getFaultPhenomenon();
-                    //如果故障现象中没有参数就不进行扫描此故障
-                    if(CollectionUtils.isEmpty(faultPhenomenon)) {
-                        continue;
-                    }
-                    //规则判断 是否出现了这种故障类型的故障。
-                    if (LogicJudg.isFault(faultPhenomenon, pumpRealTimeVariables)) {
-                        //当这个泵仍然在报警状态是则跳过
-                        if(errorPumps.get(rule.getPumpId()) == LevelEnum.WARN && LevelEnum.findLevel(rule.getLevel()) == LevelEnum.WARN) {
-                            continue;
-                        }
-                        //寻找故障原因
-                        FaultReason faultReason = LogicJudg.findReason(rule.getFaultReason(), realTimeVariables);
-                        // 带有持续时间的规则
-                        if(faultReason != null && faultReason.getDuration() != null && faultReason.getDuration() != 0) {
-                            //查询上次出现的时间
-                            FaultDump dump = this.faultDumpService.getFaultDumpById(rule.getId(), faultReason.getId(), oid);
-                            if(dump == null) {
-                                //当之前没出现过的时候，存入数据表备份中
-                                dump=new FaultDump();
-                                dump.setRuleId(rule.getId());
-                                dump.setReasonId(faultReason.getId());
-                                this.faultDumpService.createFaultDump(dump, oid);
-                                continue;
-                            }
-                            //获取持续的时间
-                            long duration_time = DateUtils.getUTC() - dump.getCreateTime();
-                            //当间隔小于这个设定的期限时，推迟判断
-                            if(duration_time < faultReason.getDuration()){
-                                continue;
-                            }else {
-                                //过大时,更新数据库。很久之前记录的信息,需要清洗掉
-                                if(duration_time > Math.max(faultReason.getDuration() * 5, 300)){
-                                    this.faultDumpService.updateFaultDump(dump, oid);
-                                    continue;
-                                }
-                            }
-                        }
-                        // 记录故障信息
-                        saveFaultInfo(onlineDevice, oid, onlineMachine, realTimeVariables, rule, faultReason);
-                        errorPumps.put(rule.getPumpId(), LevelEnum.findLevel(rule.getLevel()));
-                    }
-
-                }
+            final List<Pump> pumps = pumpService.getPumpListByModelId(onlineMachine.getModelId(), oid);
+            if (CollectionUtils.isEmpty(pumps)) {
+                return;
             }
+            List<ObjectId> pumpIds = Lists.newArrayList();
+            for (Pump pump : pumps) {
+                pumpIds.add(pump.getId());
+            }
+            //获取 plc上报的实时数据
+            final Map<String, RealTimeVariable> realTimeVariables = realTimeDataService.getAllRealTimeMap(oid, onlineMachine.getId());
+            final Map<ObjectId, List<Rule>> rulesByPumpIds = ruleService.getRulesByPumpIds(pumpIds, oid);
+            computeExecutorService.execute(new Runnable() {
+                @Override public void run() {
+                    computeDetectFault(onlineDevice, oid, onlineMachine, errorPumps, pumps, realTimeVariables, rulesByPumpIds);
+                }
+            });
         } catch (Exception e) {
             logger.warn("故障检测失败" ,e);
+        }
+    }
+
+    private void computeDetectFault(Device onlineDevice, final ObjectId oid, Machine onlineMachine, Map<ObjectId, LevelEnum> errorPumps, List<Pump> pumps, Map<String, RealTimeVariable> realTimeVariables,
+            Map<ObjectId, List<Rule>> rulesByPumpIds) {
+        for (Pump pump : pumps) {
+            //过滤出泵的参数数据
+            Map<String, RealTimeVariable> pumpRealTimeVariables = filterPumpInfos(realTimeVariables, pump);
+            if(errorPumps.get(pump.getId()) == LevelEnum.FAULT) {
+                continue;
+            }
+            //根据泵id找出 此对应型号的泵故障规则列表
+            List<Rule> rules = rulesByPumpIds.get(pump.getId());
+            for (Rule rule : rules) {
+                List<FaultParameter> faultPhenomenon = rule.getFaultPhenomenon();
+                //如果故障现象中没有参数就不进行扫描此故障
+                if(CollectionUtils.isEmpty(faultPhenomenon)) {
+                    continue;
+                }
+                //规则判断 是否出现了这种故障类型的故障。
+                if (LogicJudg.isFault(faultPhenomenon, pumpRealTimeVariables)) {
+                    //当这个泵仍然在报警状态是则跳过
+                    if(errorPumps.get(rule.getPumpId()) == LevelEnum.WARN && LevelEnum.findLevel(rule.getLevel()) == LevelEnum.WARN) {
+                        continue;
+                    }
+                    //寻找故障原因
+                    FaultReason faultReason = LogicJudg.findReason(rule.getFaultReason(), realTimeVariables);
+                    // 带有持续时间的规则
+                    if(faultReason != null && faultReason.getDuration() != null && faultReason.getDuration() != 0) {
+                        //查询上次出现的时间
+                        FaultDump dump = this.faultDumpService.getFaultDumpById(rule.getId(), faultReason.getId(), oid);
+                        if(dump == null) {
+                            //当之前没出现过的时候，存入数据表备份中
+                            dump = new FaultDump();
+                            dump.setRuleId(rule.getId());
+                            dump.setReasonId(faultReason.getId());
+                            this.faultDumpService.createFaultDump(dump, oid);
+                            continue;
+                        }
+                        //获取持续的时间
+                        long duration_time = DateUtils.getUTC() - dump.getCreateTime();
+                        //当间隔小于这个设定的期限时，推迟判断
+                        if(duration_time < faultReason.getDuration()){
+                            continue;
+                        }else {
+                            //过大时,更新数据库。很久之前记录的信息,需要清洗掉
+                            if(duration_time > Math.max(faultReason.getDuration() * 5, 300)){
+                                this.faultDumpService.updateFaultDump(dump, oid);
+                                continue;
+                            }
+                        }
+                    }
+                    errorPumps.put(rule.getPumpId(), LevelEnum.findLevel(rule.getLevel()));
+                    // 记录故障信息
+                    final Fault fault = saveFaultInfo(onlineDevice, oid, onlineMachine, realTimeVariables, rule, faultReason);
+                    saveDataExecutorService.execute(new Runnable() {
+                        @Override public void run() {
+                            faultService.createFault(fault, oid);
+                        }
+                    });
+                }
+
+            }
         }
     }
 
@@ -212,9 +239,7 @@ public class DetectService {
         return result;
     }
 
-
-
-    private void saveFaultInfo(Device onlineDevice, ObjectId oid, Machine plc,
+    private Fault saveFaultInfo(Device onlineDevice, ObjectId oid, Machine plc,
             Map<String, RealTimeVariable> realTimeVariables, Rule eachRule, FaultReason faultReason) {
         Fault fault=new Fault();
         if(faultReason != null) {
@@ -258,7 +283,7 @@ public class DetectService {
             location.setLongitude(onlineDevice.getLocation().getLongitude());
             fault.setLocation(location);
         }
-        this.faultService.createFault(fault, oid);
+        return fault;
     }
 
 
