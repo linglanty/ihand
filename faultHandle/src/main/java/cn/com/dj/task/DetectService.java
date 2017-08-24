@@ -5,11 +5,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
+import cn.com.dj.service.SendMailService;
 import org.apache.commons.collections.CollectionUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -60,7 +65,7 @@ import cn.com.inhand.dn4.utils.DateUtils;
  *  原则上,是应该有泵类型pumpType的,它定义一种类型的泵,然后每个Pump都带有泵类型信息。
  */
 @Service
-public class DetectService {
+public class DetectService implements InitializingBean{
 
     private static Logger logger = LoggerFactory.getLogger(DetectService.class);
 
@@ -91,9 +96,16 @@ public class DetectService {
 	@Autowired
 	RealTimeDataDao realTimeDataService;
 
+	@Autowired
+    SendMailService sendMailService;
+
+	private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+
     private ExecutorService computeExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-    private ExecutorService saveDataExecutorService = Executors.newCachedThreadPool();
+    private ExecutorService saveDataExecutorService = Executors.newFixedThreadPool(40);
+
+    Map<String, Long> queueSizeDruaction = Maps.newHashMap();
 	
 	@Value("${config.detect.oid}")
 	private String oId;
@@ -191,12 +203,14 @@ public class DetectService {
                     // 记录故障信息
                     final Fault fault = saveFaultInfo(onlineDevice, oid, onlineMachine, realTimeVariables, rule, faultReason);
                     saveDataExecutorService.execute(new Runnable() {
-                        @Override public void run() {
+                        @Override
+                        public void run() {
                             faultService.createFault(fault, oid);
+                            sendMailService.sendMail(new String[]{}, "泵 "+ fault.getSiteName() +" "
+                                    + "故障",fault.toString());
                         }
                     });
                 }
-
             }
         }
     }
@@ -324,7 +338,6 @@ public class DetectService {
 				 info.setRealvalue("值未找到");
 			 vars.add(info);
 		 }
-		 
 		 return vars;
 	}
 
@@ -337,6 +350,59 @@ public class DetectService {
         }
         return machines.get(0);
 	}
+
+	private static final String SAVE_DATA_EXECUTOR ="saveDataExecutorService";
+    private static final String COMPUTE_DATE_EXECUTOR ="computeExecutorService";
+    private static final int period = 5;//5分钟
+    private static final String ALERT_TITLE = "任务堆积报警";
+    private static final String COMPUTE_ALERT_CONTENT = "规则匹配计算任务堆积已经超过%s分钟";
+    private static final String SAVE_ALERT_CONTENT = "数据保存任务堆积已经超过%s分钟";
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        //用于检测线程池中任务数：当任务大量堆积时，发邮件提醒
+        scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                ThreadPoolExecutor computeExecutorService = (ThreadPoolExecutor) DetectService.this.computeExecutorService;
+                ThreadPoolExecutor saveDataExecutorService = (ThreadPoolExecutor) DetectService.this.saveDataExecutorService;
+                int saveDataQsize = saveDataExecutorService.getQueue().size();
+                long sQLastTime = isQueueLong(SAVE_DATA_EXECUTOR, saveDataQsize);
+                int computeQSize = computeExecutorService.getQueue().size();
+                long cQLastTime = isQueueLong(COMPUTE_DATE_EXECUTOR, computeQSize);
+                if (sQLastTime > 0 || cQLastTime > 0) {
+                    String message = "";
+                    if (sQLastTime > 0) {
+                        message += String.format(SAVE_ALERT_CONTENT, sQLastTime/(1000 * 60));
+                    }
+                    if (cQLastTime > 0) {
+                        message += String.format(COMPUTE_ALERT_CONTENT, cQLastTime/(1000 * 60));
+                    }
+                    sendMailService.sendMail(new String[]{"dblpfilter@163.com","ty2497@mail.ustc.edu.cn"}, ALERT_TITLE, message);
+                }
+            }
+        },1000l,1000l, TimeUnit.MILLISECONDS);
+    }
+
+    private long isQueueLong(String key, int size) {
+        if (size == 0) {
+            queueSizeDruaction.put(key, -1l);
+        }else {
+            Long time = queueSizeDruaction.get(key);
+            if (time == null) {
+                queueSizeDruaction.put(key, System.currentTimeMillis());
+            }else {
+                if (time == -1l) {
+                    queueSizeDruaction.put(key, System.currentTimeMillis());
+                }else {
+                    if (System.currentTimeMillis() - time > period * 1000 * 60) {
+                        return System.currentTimeMillis() - time;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
 }
 
 

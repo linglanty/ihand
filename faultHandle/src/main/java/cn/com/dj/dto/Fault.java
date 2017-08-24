@@ -204,4 +204,12 @@ public class Fault {
 	public void setVars(List<InfoVarValue> vars) {
 		this.vars = vars;
 	}
+
+	@Override
+	public String toString() {
+		return "Fault{" + "id=" + id + ", level=" + level + ", machineId=" + machineId + ", ruleId=" + ruleId + ", pumpId=" + pumpId + ", pumpName='" + pumpName + '\'' + ", machineName='"
+				+ machineName + '\'' + ", siteName='" + siteName + '\'' + ", machineAddress='" + machineAddress + '\'' + ", faultPhenomenon='" + faultPhenomenon + '\'' + ", faultReason='"
+				+ faultReason + '\'' + ", handleMethod='" + handleMethod + '\'' + ", repairmanMajor='" + repairmanMajor + '\'' + ", createTime=" + createTime + ", location=" + location + ", status="
+				+ status + ", vars=" + vars + '}';
+	}
 }
