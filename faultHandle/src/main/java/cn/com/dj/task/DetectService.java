@@ -355,7 +355,7 @@ public class DetectService implements InitializingBean{
     private static final String COMPUTE_DATE_EXECUTOR ="computeExecutorService";
     private static final int period = 5;//5分钟
     private static final String ALERT_TITLE = "任务堆积报警";
-    private static final String COMPUTE_ALERT_CONTENT = "规则匹配计算任务堆积已经超过%s分钟";
+    private static final String COMPUTE_ALERT_CONTENT = "规则匹配计算任务堆积已经超过%s分钟;\n";
     private static final String SAVE_ALERT_CONTENT = "数据保存任务堆积已经超过%s分钟";
 
     @Override
