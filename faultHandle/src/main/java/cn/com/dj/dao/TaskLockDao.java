@@ -16,12 +16,12 @@ CREATE TABLE `task_lock` (
 * */
 public interface TaskLockDao {
     /**
-     * 同一时间只会有一个调度器能拿到锁,即 update执行成功
+     *
      *  a, lock_time = 2017年 8月17日 星期四 17时57分19秒 CST
      *  b 拿不到锁,
      * @param date
      * @return
      */
     @Update("update task_lock set lock_time = now(),ip = #{ip} where lock_time <= #{date}")
-    public int lock(@Param("date") Date date, @Param("ip") String ip);//date = now - 5min(定时任务的执行周期)
+    public int lock(@Param("date") Date date, @Param("ip") String ip);//date = now - 5s(定时任务的执行周期)
 }

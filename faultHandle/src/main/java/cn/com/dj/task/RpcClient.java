@@ -40,7 +40,6 @@ public class RpcClient {
             return  false;
         }
         return false;
-
     }
 
 }

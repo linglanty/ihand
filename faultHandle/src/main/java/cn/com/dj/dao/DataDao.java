@@ -5,10 +5,10 @@ import org.bson.types.ObjectId;
 import cn.com.dj.dto.Data;
 
 
-public abstract interface DataDao
+public interface DataDao
 {
 	
-	public abstract Data getlastestData(ObjectId deviceId,String varId,ObjectId oid);
+	Data getlastestData(ObjectId deviceId, String varId, ObjectId oid);
 	
 }
 

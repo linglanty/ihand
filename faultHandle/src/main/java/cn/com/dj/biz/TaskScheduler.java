@@ -5,6 +5,7 @@ import cn.com.dj.dao.TaskLockDao;
 import cn.com.dj.dto.heartbeat.HeartBeatInfo;
 import cn.com.dj.service.AutoHeartBeatService;
 import cn.com.dj.service.DeviceService;
+import cn.com.dj.service.SendMailService;
 import cn.com.dj.task.RpcClient;
 import cn.com.dj.util.DateUtils;
 import cn.com.dj.util.MachineUtils;
@@ -76,6 +77,8 @@ public class TaskScheduler {
     @Value("${config.detect.oid}")
     private String oId;
 
+    @Autowired SendMailService sendMailService;
+
     //定时任务每隔5分钟执行一次
     public void execAllTasks() {
         // step0:所有机器抢占式执行定时任务
@@ -100,10 +103,34 @@ public class TaskScheduler {
         List<HeartBeatInfo> onlineMachines = getOnlineMachines(date);
         // step3 : 为每个机器分配任务
         Map<HeartBeatInfo, List<ObjectId>> tasks = allocateTasks(onlineMachines, onlineDevices);
-        for (Map.Entry<HeartBeatInfo, List<ObjectId>> task : tasks.entrySet()) {
-            //step4: 告诉每个机器去执行定时任务
-            sendTasks(task.getKey(), task.getValue());
+
+        //剩下可以执行任务的机器数量
+        int restMachineCount = onlineMachines.size();
+        while (restMachineCount > 0) {
+            for (Map.Entry<HeartBeatInfo, List<ObjectId>> task : tasks.entrySet()) {
+                //step4: 告诉每个机器去执行定时任务
+                boolean isSuccess = sendTasks(task.getKey(), task.getValue());
+                onlineMachines.remove(task.getKey());
+                restMachineCount --;
+                if (isSuccess) {
+                    onlineDevices.removeAll(task.getValue());
+                } else {
+                    //出错时重新分配任务
+                    tasks = allocateTasks(onlineMachines, onlineDevices);
+                    break;
+                }
+            }
         }
+        //当能分配任务的机器已经用完了，但任务没分配完会发报警
+        if (CollectionUtils.isEmpty(onlineDevices)) {
+            alert("Task Scheduler can not dispatch the tasks completely！！");
+        }
+    }
+
+    private static final String ALERT_TITLE = "调度器未完成任务调度";
+
+    private void alert(String message) {
+        sendMailService.sendMail(new String[]{"dblpfilter@163.com","ty2497@mail.ustc.edu.cn"}, ALERT_TITLE, message);
     }
 
     //分配任务
@@ -130,11 +157,11 @@ public class TaskScheduler {
         return taskMap;
     }
 
-    private void sendTasks(HeartBeatInfo machine, List<ObjectId> objectIds) {
+    private boolean sendTasks(HeartBeatInfo machine, List<ObjectId> objectIds) {
         if (CollectionUtils.isEmpty(objectIds)) {
-            return;
+            return true;
         }
-        rpcClient.sendTasks(machine.getIp(), objectIds);
+       return rpcClient.sendTasks(machine.getIp(), objectIds);
     }
 
     private double computeCpuUsage(HeartBeatInfo machine) {

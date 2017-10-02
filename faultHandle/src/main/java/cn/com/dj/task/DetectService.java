@@ -112,8 +112,7 @@ public class DetectService implements InitializingBean{
 
 	private String variableId;//变量ID
 
-	public void detectFaults(final Device onlineDevice)
-	{
+	public void detectFaults(final Device onlineDevice) {
         if(onlineDevice == null) {
             return;
         }

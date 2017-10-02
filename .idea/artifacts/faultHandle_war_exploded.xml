@@ -7,6 +7,7 @@
           <element id="module-output" name="faultHandle" />
         </element>
         <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: com.oracle:ojdbc14:10.2.0.4.0" />
           <element id="library" level="project" name="Maven: joda-time:joda-time:2.9.9" />
           <element id="library" level="project" name="Maven: com.alibaba:fastjson:1.2.7.sec01" />
           <element id="library" level="project" name="Maven: org.mybatis:mybatis:3.3.0" />

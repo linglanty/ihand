@@ -56,6 +56,7 @@ public class TaskController {
         if (task == null) {
             return false;
         }
+        System.gc();
         final ObjectId oId = new ObjectId(this.oId);
         List<ObjectId> tasks = task.getTasks();//30个元素
         for (final ObjectId deviceId : tasks) {
