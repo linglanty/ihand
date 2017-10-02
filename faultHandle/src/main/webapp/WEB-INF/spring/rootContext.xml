@@ -93,9 +93,9 @@
 		</property>
 	</bean>
 
-    <!--定时任务执行-->
+    <!--定时任务执行 每5分钟执行一次-->
     <!--http://www.blogjava.net/hao446tian/archive/2012/02/13/369872.html-->
 	<task:scheduled-tasks>
-		<task:scheduled ref="taskScheduler" method="execAllTasks" cron="0 0/3 * * * ?" />
+		<task:scheduled ref="taskScheduler" method="execAllTasks" cron="0 0/5 * * * ?" />
 	</task:scheduled-tasks>
 </beans>

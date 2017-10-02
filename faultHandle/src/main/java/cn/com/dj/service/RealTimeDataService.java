@@ -6,11 +6,11 @@
 
 package cn.com.dj.service;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
+import cn.com.dj.dao.RealTimeDataDao;
+import cn.com.dj.dto.RealTimeData;
+import cn.com.dj.dto.RealTimeVariable;
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.common.util.UpdateUtils;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
@@ -19,14 +19,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import cn.com.dj.dao.RealTimeDataDao;
-import cn.com.dj.dto.RealTimeData;
-import cn.com.dj.dto.RealTimeVariable;
-import cn.com.dj.dto.Rule;
-import cn.com.inhand.common.exception.ErrorCode;
-import cn.com.inhand.common.exception.ErrorCodeException;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.common.util.UpdateUtils;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -47,16 +42,11 @@ public class RealTimeDataService extends MongoService implements
 	}
 
 	@Override
-	public Map<ObjectId, Map<String, RealTimeVariable>> getAllRealTimeMap(
-			ObjectId oId, List<ObjectId> machineIds) {
-		Map<ObjectId, Map<String, RealTimeVariable>> realTimeData = new LinkedHashMap<ObjectId, Map<String, RealTimeVariable>>();
-		for (ObjectId machineId : machineIds) {
-			Map<String, RealTimeVariable> realVar = getRealTimeDataFromRTData(
-					oId, machineId);
-			if (realVar != null && realVar.size() != 0)
-				realTimeData.put(machineId, realVar);
-		}
-		return realTimeData;
+	public Map<String, RealTimeVariable> getAllRealTimeMap(
+			ObjectId oId, ObjectId machineId) {
+		Map<String, RealTimeVariable> realVar = getRealTimeDataFromRTData(
+				oId, machineId);
+		return realVar;
 	}
 
 	private Map<String, RealTimeVariable> getRealTimeDataFromRTData(

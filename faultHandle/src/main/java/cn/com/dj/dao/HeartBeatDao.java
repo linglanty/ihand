@@ -2,6 +2,7 @@ package cn.com.dj.dao;
 
 import cn.com.dj.dto.heartbeat.HeartBeatInfo;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.Date;
@@ -21,17 +22,17 @@ import java.util.List;
 public interface HeartBeatDao {
 
     String INSERT_KEYS = "ip,date,cpu_rate";
-    String SELECT_KEYS = "ip,date,cpu_rate AS cpuRate";
+    String SELECT_KEYS = "ip, date, cpu_rate AS cpuRate";
 
     /**
      * 上传心跳信息到数据库
      * @param beatInfo
      * @return
      */
-    @Insert("REPLACE INTO heat_beat("+ INSERT_KEYS +") values(#{ip},#{date},#{cpuRate})")
+    @Insert("REPLACE INTO heat_beat(ip, date, cpu_rate) values(#{ip},#{date},#{cpuRate})")
     public int submitHeatBeatInfo(HeartBeatInfo beatInfo);
 
-    @Select("SELECT " + SELECT_KEYS + " FROM heat_beat where date > #{date}")
-    public List<HeartBeatInfo> getValidMachine(Date date);
+    @Select("SELECT ip, date, cpu_rate AS cpuRate FROM heat_beat where date > #{date}")
+    public List<HeartBeatInfo> getValidMachine(@Param("date") Date date);
 
 }

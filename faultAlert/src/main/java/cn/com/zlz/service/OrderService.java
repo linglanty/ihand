@@ -1,7 +1,14 @@
 package cn.com.zlz.service;
 
-import java.util.*;
-
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.common.util.UpdateUtils;
+import cn.com.inhand.dn4.utils.DateUtils;
+import cn.com.zlz.dao.OrderDAO;
+import cn.com.zlz.dto.OrderQueryBean;
+import cn.com.zlz.model.Employee;
+import cn.com.zlz.model.Order;
+import cn.com.zlz.util.QueryGenerator;
+import com.mongodb.Mongo;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +20,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import cn.com.zlz.model.*;
-import cn.com.inhand.common.model.Machine;
-import cn.com.inhand.common.service.MongoFactory;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.common.util.UpdateUtils;
-import cn.com.inhand.dn4.utils.DateUtils;
-import cn.com.zlz.dao.OrderDAO;
-import cn.com.zlz.dto.OrderQueryBean;
-import cn.com.zlz.util.QueryGenerator;
-
-import com.mongodb.Mongo;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Service
 public class OrderService extends MongoService
@@ -259,10 +258,7 @@ implements OrderDAO{
 
 	@Override
 	public List<Order> getOrdersByLocation(ObjectId oId, String location) {
-		// TODO Auto-generated method stub
-		
 		MongoTemplate template = this.factory.getMongoTemplateByOId(oId);
-		
 		Query query = Query.query(Criteria.where("location").is(location));
 		
 		return template.find(query, Order.class);
@@ -271,7 +267,6 @@ implements OrderDAO{
 	@Override
 	public List<Order> getOrdersIsReceived(ObjectId oId, boolean isReceived, long st_time, long en_time
 			, int skip, int limit, boolean useCursor) {
-		// TODO Auto-generated method stub
 		Query query = Query.query(Criteria.where("received").is(isReceived));
 		query.addCriteria(Criteria.where("createTime").gte(st_time).lte(en_time));
 		

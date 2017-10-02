@@ -55,7 +55,6 @@ public class FaultService extends MongoService implements FaultDao {
 		Query query = new Query();
 		//未派工 和已派工未接受的
 		query.addCriteria(Criteria.where("status").ne(2));
-		//query.addCriteria(Criteria.where("level").is(Integer.valueOf(2)));
 		this.queryGenrator.withSortDESC(query, "createTime");
 		List<Fault> faultInfos = mt.find(query, Fault.class,
 				this.collectionName);

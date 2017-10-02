@@ -1,10 +1,10 @@
 package cn.com.dj.dao;
 
-import java.util.List;
-
+import cn.com.dj.dto.Rule;
 import org.bson.types.ObjectId;
 
-import cn.com.dj.dto.Rule;
+import java.util.List;
+import java.util.Map;
 
 public interface RuleDao {
 
@@ -22,9 +22,19 @@ public interface RuleDao {
 	 * @param oid
 	 * @return
 	 */
-	public List<Rule> getRuleListByRuleIds(List<ObjectId> modelIds,ObjectId oid) ;
-	
-	
+	public List<Rule> getRulesByRuleIds(ObjectId modelId,ObjectId oid) ;
+
+	/**
+	 * get the rule list of a Model
+	 * @param pumpId
+	 * @param oid
+	 * @return
+	 */
+	public List<Rule> getRulesByPumpId(ObjectId pumpId,ObjectId oid) ;
+
+
+	public Map<ObjectId, List<Rule>> getRulesByPumpIds(List<ObjectId> pumpIds,ObjectId oid);
+
 	/**
 	 * is the rule phenomenon exist?
 	 * @param oId
@@ -60,5 +70,5 @@ public interface RuleDao {
 	 * @param oid
 	 */
 	public void modifyRule(Rule rule,ObjectId oid);
-	
+
 }

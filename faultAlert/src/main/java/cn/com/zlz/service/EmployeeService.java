@@ -1,7 +1,12 @@
 package cn.com.zlz.service;
 
-import java.util.*;
-
+import cn.com.dj.model.Fault;
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.common.util.UpdateUtils;
+import cn.com.zlz.dao.EmployeeDAO;
+import cn.com.zlz.dto.EmployeeFaultBean;
+import cn.com.zlz.model.Employee;
+import cn.com.zlz.util.QueryGenerator;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,16 +16,13 @@ import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
-import cn.com.zlz.model.*;
-import cn.com.dj.model.*;
-import cn.com.inhand.common.model.Machine;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.common.util.UpdateUtils;
-import cn.com.zlz.dao.*;
-import cn.com.zlz.dto.EmployeeFaultBean;
-import cn.com.zlz.util.QueryGenerator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmployeeService extends MongoService implements EmployeeDAO {
@@ -120,28 +122,8 @@ private static final Logger logger = LoggerFactory.getLogger(OrderService.class)
 		
 		List<Employee> employeeList = template.find(new Query(), Employee.class);
 
-		
 		Map<Employee, Float> emp2Dis = new HashMap<Employee, Float>();
 		for(Employee emp : employeeList) {
-			
-//			System.out.println(emp);
-			
-//			Set<String> majorEmp = emp.getMajors();
-//			
-//			if(majorEmp==null || majorEmp.size()==0)
-//				continue;
-//			boolean valid = true;
-//			for(String m : majorNeed) {
-//				if(!majorEmp.contains(m)) {
-//					valid = false;
-//					break;
-//				}
-//			}
-//			if(!valid)
-//				continue;
-//			System.out.println(emp);
-//			if(emp.getLongitude()==0.0 && emp.getLatitude()==0.0)
-//				continue;
 			float dis = (float) Math.sqrt((longitude-emp.getLongitude())*(longitude-emp.getLongitude())
 					+ (latitude-emp.getLatitude())*(latitude-emp.getLatitude()));
 			emp2Dis.put(emp, dis);

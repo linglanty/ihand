@@ -19,7 +19,7 @@ public class HomeController {
         DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
 
         String formattedDate = dateFormat.format(date); 
-        return new ServerInfoBean("zlz_controller", formattedDate);
+        return new ServerInfoBean("faultAlert", formattedDate);
     }
 
 }

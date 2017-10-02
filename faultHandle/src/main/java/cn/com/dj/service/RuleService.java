@@ -6,8 +6,12 @@
 
 package cn.com.dj.service;
 
-import java.util.List;
-
+import cn.com.dj.dao.RuleDao;
+import cn.com.dj.dto.Rule;
+import cn.com.inhand.common.service.MongoService;
+import cn.com.inhand.common.util.UpdateUtils;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +22,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import cn.com.dj.dao.RuleDao;
-import cn.com.dj.dto.Rule;
-import cn.com.inhand.common.model.Machine;
-import cn.com.inhand.common.service.MongoService;
-import cn.com.inhand.common.util.UpdateUtils;
-import cn.com.inhand.dn4.utils.DateUtils;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -80,18 +80,38 @@ public class RuleService extends MongoService implements RuleDao{
 
 	@Override
 	public boolean isRulePhenomenonExists(ObjectId oId, String name) {
-		// TODO Auto-generated method stub
 		Query query = Query.query(Criteria.where("faultPhenomenon").is(name));
 	    return exist(oId, query, "model");
 	}
 
 	@Override
-	public List<Rule> getRuleListByRuleIds(List<ObjectId> modelIds, ObjectId oId) {
-		// TODO Auto-generated method stub
+	public List<Rule> getRulesByRuleIds(ObjectId modelId, ObjectId oId) {
 		MongoTemplate template = this.factory.getMongoTemplateByOId(oId);
-		return template.find(Query.query(Criteria.where("modelId").in(modelIds)), Rule.class, this.collectionName);
-		
+		return template.find(Query.query(Criteria.where("modelId").is(modelId)), Rule.class, this.collectionName);
 	}
 
+	@Override
+	public List<Rule> getRulesByPumpId(ObjectId pumpId,ObjectId oid) {
+		MongoTemplate template = this.factory.getMongoTemplateByOId(oid);
+		return template.find(Query.query(Criteria.where("pumpId").is(pumpId)), Rule.class, this.collectionName);
+	}
+
+	public Map<ObjectId, List<Rule>> getRulesByPumpIds(List<ObjectId> pumpIds,ObjectId oid) {
+		Map<ObjectId, List<Rule>> res = Maps.newHashMap();
+		MongoTemplate template = this.factory.getMongoTemplateByOId(oid);
+		List<Rule> rules = template.find(Query.query(Criteria.where("pumpId").in(pumpIds)), Rule.class, this.collectionName);
+		for (Rule rule: rules) {
+			addVal(res, rule.getPumpId(), rule);
+		}
+		return res;
+	}
+
+	private void addVal(Map<ObjectId, List<Rule>> maps, ObjectId key, Rule rule) {
+		if (!maps.containsKey(key)) {
+			maps.put(key, Lists.<Rule>newArrayList());
+		}
+		List<Rule> rules = maps.get(key);
+		rules.add(rule);
+	}
     
 }

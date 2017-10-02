@@ -18,8 +18,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Controller
-@RequestMapping({"api/task/"})
-public class HomeController {
+@RequestMapping()
+public class TaskController {
 
     @Autowired
     private DetectService detectService;
@@ -30,31 +30,35 @@ public class HomeController {
     @Value("${config.detect.oid}")
     private String oId;
 
-    private ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     /**
      * 验证机器是否正常运行
      * @param request api/task/listcheck
      * @return
      */
-    @RequestMapping(value = { "listcheck", "listcheck.json" }, method = RequestMethod.GET)
+    @RequestMapping(value = { "api/task/listcheck", "api/task/listcheck.json" }, method = RequestMethod.GET)
     public Boolean listcheck(HttpServletRequest request) {
         return true;
     }
 
     /**
+     * 执行定时任务
+     */
+    /**
      * api/task/execTasks
      * @param task
      * @return
      */
-    @RequestMapping(value={"execTasks"}, method={org.springframework.web.bind.annotation.RequestMethod.POST})
+    @RequestMapping(value={"api/task/execTasks"}, method={RequestMethod.POST})
     @ResponseBody
     public Boolean execTasks(Task task) {
         if (task == null) {
             return false;
         }
+        System.gc();
         final ObjectId oId = new ObjectId(this.oId);
-        List<ObjectId> tasks = task.getTasks();
+        List<ObjectId> tasks = task.getTasks();//30个元素
         for (final ObjectId deviceId : tasks) {
             executorService.submit(new Runnable() {
                 @Override public void run() {
